@@ -144,6 +144,45 @@ const en = {
       button: "Discuss a project",
     },
   },
+  audit: {
+    eyebrow: "AI BUSINESS AUDIT",
+    title: ["Show me the process.", "AI will find what can be automated."],
+    description:
+      "Describe a manual or time-consuming business process. AI will analyze it and suggest a possible automation architecture.",
+    inputLabel: "Describe the business process",
+    placeholder:
+      "For example: leads arrive from WhatsApp and Instagram. Managers manually copy them into a spreadsheet, distribute them between employees and track statuses separately...",
+    button: "Run AI audit",
+    retry: "Try again",
+    disclaimer:
+      "This is a preliminary technical analysis. Final architecture depends on the actual processes, constraints and integrations.",
+    privacy:
+      "Do not submit passwords, API keys, customer personal data or other confidential information.",
+    comingSoon: "AI audit is coming soon.",
+    processorLabel: "AUDIT PROCESSOR",
+    processorIdle: "Ready for process input",
+    processorNodes: ["PROCESS", "ANALYSIS", "ARCHITECTURE"],
+    loading: ["Analyzing process", "Finding automation opportunities", "Building architecture"],
+    sections: {
+      summary: "Summary",
+      opportunities: "Automation opportunities",
+      architecture: "Possible architecture",
+      requirements: "Requirements",
+      questions: "Questions to clarify",
+      risks: "Risks / constraints",
+    },
+    ctaTitle: "Want to take this architecture further?",
+    ctaButton: "Discuss with Eduard",
+    errors: {
+      invalid: "Describe a real business process in 20–1500 characters.",
+      notAllowed: "This AI tool is limited to business-process and automation analysis.",
+      suggestion: "Describe a real process you want to automate.",
+      rateLimited: "Audit limit reached. Please try again later.",
+      unavailable: "AI audit is temporarily unavailable. Please try again later.",
+      internal: "The audit could not be completed. Please try again.",
+      turnstile: "Complete the security check and try again.",
+    },
+  },
   about: {
     eyebrow: "ABOUT",
     title: ["I don't just add AI features.", "I design working systems."],
@@ -327,6 +366,45 @@ const ru = {
       title: "Есть процесс, который пора автоматизировать?",
       text: "Опишите задачу — помогу определить, что можно автоматизировать и какая архитектура для этого подходит.",
       button: "Обсудить проект",
+    },
+  },
+  audit: {
+    eyebrow: "AI BUSINESS AUDIT",
+    title: ["Покажите процесс.", "AI найдёт, что можно автоматизировать."],
+    description:
+      "Опишите процесс, который сейчас выполняется вручную или занимает слишком много времени. AI разберёт задачу и предложит возможную архитектуру автоматизации.",
+    inputLabel: "Опишите бизнес-процесс",
+    placeholder:
+      "Например: заявки приходят из WhatsApp и Instagram. Менеджеры вручную переносят их в таблицу, распределяют между сотрудниками и отдельно следят за статусами...",
+    button: "Провести AI-аудит",
+    retry: "Попробовать снова",
+    disclaimer:
+      "AI формирует предварительный технический разбор. Финальная архитектура зависит от реальных процессов, ограничений и интеграций.",
+    privacy:
+      "Не отправляйте пароли, API-ключи, персональные данные клиентов и другую конфиденциальную информацию.",
+    comingSoon: "AI-аудит скоро будет доступен.",
+    processorLabel: "AUDIT PROCESSOR",
+    processorIdle: "Ожидает описание процесса",
+    processorNodes: ["ПРОЦЕСС", "АНАЛИЗ", "АРХИТЕКТУРА"],
+    loading: ["Анализирую процесс", "Ищу точки автоматизации", "Формирую архитектуру"],
+    sections: {
+      summary: "Краткий разбор",
+      opportunities: "Что можно автоматизировать",
+      architecture: "Возможная архитектура",
+      requirements: "Что потребуется",
+      questions: "Что нужно уточнить",
+      risks: "Риски / ограничения",
+    },
+    ctaTitle: "Хотите разобрать такую систему подробнее?",
+    ctaButton: "Обсудить с Эдуардом",
+    errors: {
+      invalid: "Опишите реальный бизнес-процесс длиной от 20 до 1500 символов.",
+      notAllowed: "Этот AI-инструмент предназначен только для анализа бизнес-процессов и задач автоматизации.",
+      suggestion: "Опишите реальный процесс, который хотите автоматизировать.",
+      rateLimited: "Лимит аудитов исчерпан. Попробуйте позже.",
+      unavailable: "AI-аудит временно недоступен. Попробуйте позже.",
+      internal: "Не удалось завершить аудит. Попробуйте ещё раз.",
+      turnstile: "Пройдите проверку безопасности и повторите запрос.",
     },
   },
   about: {
