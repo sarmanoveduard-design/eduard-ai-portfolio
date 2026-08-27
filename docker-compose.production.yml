@@ -10,6 +10,12 @@ services:
       - .env.production
     mem_limit: 512m
     cpus: 0.50
+    pids_limit: 100
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
     security_opt:
       - no-new-privileges:true
     cap_drop:

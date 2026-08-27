@@ -12,6 +12,7 @@ export const aiConfig = {
   rateLimitSalt: process.env.RATE_LIMIT_SALT?.trim() || "",
   turnstileSiteKey: process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY?.trim() || "",
   turnstileSecretKey: process.env.TURNSTILE_SECRET_KEY?.trim() || "",
+  turnstileExpectedHostname: process.env.TURNSTILE_EXPECTED_HOSTNAME?.trim() || "",
   isProduction,
   timeoutMs: 25_000,
   gateMaxOutputTokens: 500,
@@ -24,7 +25,8 @@ export function getAuditAvailability() {
       && aiConfig.redisToken
       && aiConfig.rateLimitSalt
       && aiConfig.turnstileSiteKey
-      && aiConfig.turnstileSecretKey,
+      && aiConfig.turnstileSecretKey
+      && aiConfig.turnstileExpectedHostname,
   );
 
   return {
@@ -41,6 +43,7 @@ export function isServerPipelineConfigured() {
       && aiConfig.redisToken
       && aiConfig.rateLimitSalt
       && aiConfig.turnstileSiteKey
-      && aiConfig.turnstileSecretKey,
+      && aiConfig.turnstileSecretKey
+      && aiConfig.turnstileExpectedHostname,
   );
 }

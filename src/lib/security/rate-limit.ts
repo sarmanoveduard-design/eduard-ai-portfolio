@@ -2,6 +2,7 @@ import "server-only";
 import { createHash } from "node:crypto";
 import { Redis } from "@upstash/redis";
 import { aiConfig } from "@/lib/ai/config";
+import { getClientIp } from "./client-ip";
 
 export type RateLimitResult = { allowed: boolean; retryAfter: number };
 
@@ -77,10 +78,7 @@ export function createRateLimiter(): RateLimiter {
 }
 
 export function hashVisitor(request: Request) {
-  const forwarded = request.headers.get("cf-connecting-ip")
-    || request.headers.get("x-real-ip")
-    || request.headers.get("x-forwarded-for")?.split(",")[0]?.trim()
-    || "unknown";
+  const forwarded = getClientIp(request) || "unknown";
   const salt = aiConfig.rateLimitSalt || "development-only-rate-limit-salt";
   return createHash("sha256").update(`${forwarded}:${salt}`).digest("hex");
 }

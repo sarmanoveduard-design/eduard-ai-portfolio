@@ -6,6 +6,8 @@ import { classifyPurpose, detectImmediateDenial } from "@/lib/ai/purpose-gate";
 import { parseAuditRequest } from "@/lib/ai/schemas";
 import { createRateLimiter, hashVisitor } from "@/lib/security/rate-limit";
 import { verifyTurnstile } from "@/lib/security/turnstile";
+import { getClientIp } from "@/lib/security/client-ip";
+import { readBoundedJson } from "@/lib/security/request-body";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -35,15 +37,14 @@ export async function POST(request: Request) {
   };
 
   try {
-    const contentLength = Number(request.headers.get("content-length") || 0);
-    if (contentLength > 12_000 || !request.headers.get("content-type")?.includes("application/json")) {
+    if (!request.headers.get("content-type")?.toLowerCase().includes("application/json")) {
       log("invalid_input");
       return errorResponse(400, "INVALID_INPUT");
     }
 
     let body: unknown;
     try {
-      body = await request.json();
+      body = await readBoundedJson(request);
     } catch {
       log("invalid_input");
       return errorResponse(400, "INVALID_INPUT");
@@ -60,7 +61,7 @@ export async function POST(request: Request) {
     }
 
     const signal = AbortSignal.timeout(aiConfig.timeoutMs);
-    if (!await verifyTurnstile(input.turnstileToken, signal)) {
+    if (!await verifyTurnstile(input.turnstileToken, getClientIp(request), signal)) {
       log("not_allowed", { stage: "bot_protection" });
       return errorResponse(403, "NOT_ALLOWED");
     }

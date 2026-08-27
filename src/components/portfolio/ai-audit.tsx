@@ -5,7 +5,7 @@ import { FormEvent, useEffect, useId, useRef, useState } from "react";
 import { ArrowRight, LockKeyhole, RotateCcw, ShieldCheck, Sparkles } from "lucide-react";
 import type { Dictionary } from "@/i18n/dictionaries";
 import type { Locale } from "@/i18n/config";
-import { MAX_AUDIT_INPUT, MIN_AUDIT_INPUT, type AuditResult } from "@/lib/ai/schemas";
+import { MAX_AUDIT_INPUT, MIN_AUDIT_INPUT, TURNSTILE_ACTION, type AuditResult } from "@/lib/ai/schemas";
 import { AiAuditResult } from "./ai-audit-result";
 
 declare global {
@@ -64,6 +64,7 @@ export function AiAudit({ dictionary, locale, enabled, turnstileSiteKey }: { dic
     if (!enabled || !turnstileSiteKey || !scriptReady || !turnstileRef.current || !window.turnstile || widgetId.current) return;
     widgetId.current = window.turnstile.render(turnstileRef.current, {
       sitekey: turnstileSiteKey,
+      action: TURNSTILE_ACTION,
       theme: "dark",
       size: "flexible",
       callback: (value: string) => setToken(value),

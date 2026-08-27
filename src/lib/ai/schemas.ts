@@ -2,6 +2,8 @@ import type { Locale } from "@/i18n/config";
 
 export const MIN_AUDIT_INPUT = 20;
 export const MAX_AUDIT_INPUT = 1500;
+export const MAX_TURNSTILE_TOKEN_LENGTH = 2048;
+export const TURNSTILE_ACTION = "ai_audit";
 
 export const architectureNodeTypes = [
   "source",
@@ -101,10 +103,11 @@ export function parseAuditRequest(value: unknown): AuditRequest | null {
   if (typeof candidate.process !== "string" || (candidate.locale !== "en" && candidate.locale !== "ru")) return null;
   const process = candidate.process.trim();
   if (process.length < MIN_AUDIT_INPUT || process.length > MAX_AUDIT_INPUT) return null;
+  if (typeof candidate.turnstileToken !== "string" || candidate.turnstileToken.length > MAX_TURNSTILE_TOKEN_LENGTH) return null;
   return {
     process,
     locale: candidate.locale,
-    turnstileToken: typeof candidate.turnstileToken === "string" ? candidate.turnstileToken : "",
+    turnstileToken: candidate.turnstileToken,
   };
 }
 
