@@ -1,36 +1,40 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Eduard Sarmanov Portfolio
 
-## Getting Started
+Bilingual portfolio for Eduard Sarmanov — AI Systems Architect and Full-Stack Engineer.
 
-First, run the development server:
+## Stack
+
+- Next.js 16 and React 19
+- TypeScript and Tailwind CSS 4
+- Motion and Lucide React
+- Next.js Metadata API and generated social images
+
+## Local development
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000). The root route selects `/en` or `/ru` from the saved locale and browser language.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Environment
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Copy `.env.example` to `.env.local` and set the public production origin:
 
-## Learn More
+```bash
+NEXT_PUBLIC_SITE_URL=https://your-domain.com
+```
 
-To learn more about Next.js, take a look at the following resources:
+The value is used for canonical URLs, language alternates, robots.txt, sitemap.xml, and social metadata. Local development falls back to `http://localhost:3000`.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Checks
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```bash
+npm run lint
+npm run build
+```
 
-## Deploy on Vercel
+## Deployment
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Vercel is recommended. Configure `NEXT_PUBLIC_SITE_URL` in the project environment before the production deployment.
