@@ -347,6 +347,117 @@ button { font: inherit; }
   box-shadow: inset 0 1px rgba(255, 255, 255, 0.025), 0 28px 80px rgba(0, 0, 0, 0.14);
 }
 
+.about-section {
+  background:
+    radial-gradient(circle at 84% 30%, rgba(78, 94, 174, 0.06), transparent 28rem),
+    #0a0b0e;
+}
+
+.about-grid {
+  opacity: 0.38;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.016) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.016) 1px, transparent 1px);
+  background-size: 84px 84px;
+  mask-image: linear-gradient(to bottom, transparent, black 16%, transparent 90%);
+}
+
+.about-title {
+  font-size: clamp(2.75rem, 5.5vw, 6.1rem);
+  line-height: 0.98;
+  letter-spacing: -0.064em;
+}
+
+.about-identity {
+  box-shadow: inset 0 1px rgba(255, 255, 255, 0.025), 0 30px 90px rgba(0, 0, 0, 0.16);
+}
+
+.about-system {
+  position: relative;
+  height: 62px;
+  border-top: 1px solid rgba(255, 255, 255, 0.055);
+}
+
+.about-system::before {
+  content: "";
+  position: absolute;
+  left: 10%;
+  right: 10%;
+  top: 31px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(151, 166, 249, 0.22), transparent);
+}
+
+.about-system span {
+  position: absolute;
+  top: 28px;
+  width: 7px;
+  height: 7px;
+  border: 1px solid rgba(170, 182, 255, 0.25);
+  border-radius: 50%;
+  background: #0b0d11;
+}
+
+.about-system span:nth-child(1) { left: 11%; }
+.about-system span:nth-child(2) { left: 37%; }
+.about-system span:nth-child(3) { left: 63%; border-color: rgba(171, 185, 255, 0.6); box-shadow: 0 0 10px rgba(131, 150, 244, 0.25); }
+.about-system span:nth-child(4) { right: 11%; }
+
+.about-principle {
+  box-shadow: inset 0 1px rgba(255, 255, 255, 0.018);
+}
+
+.contact-section {
+  background:
+    radial-gradient(ellipse at 50% 18%, rgba(83, 101, 197, 0.085), transparent 36rem),
+    #090a0d;
+}
+
+.contact-grid {
+  opacity: 0.52;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.017) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.017) 1px, transparent 1px);
+  background-size: 64px 64px;
+  mask-image: radial-gradient(ellipse at center, black, transparent 78%);
+}
+
+.contact-title {
+  font-size: clamp(3.15rem, 6.7vw, 7.5rem);
+  line-height: 0.93;
+  letter-spacing: -0.07em;
+}
+
+.contact-card {
+  border-color: rgba(255, 255, 255, 0.085);
+  background: rgba(255, 255, 255, 0.022);
+  box-shadow: inset 0 1px rgba(255, 255, 255, 0.018), 0 28px 80px rgba(0, 0, 0, 0.14);
+  transition: border-color 420ms ease, background-color 420ms ease, transform 420ms ease, box-shadow 420ms ease;
+}
+
+.contact-card-glow {
+  background: rgba(102, 119, 211, 0.08);
+  opacity: 0.45;
+  transition: opacity 420ms ease, transform 600ms ease;
+}
+
+.contact-card-primary {
+  border-color: rgba(128, 211, 170, 0.15);
+  background: linear-gradient(145deg, rgba(82, 168, 126, 0.065), rgba(255, 255, 255, 0.018) 62%);
+}
+
+.contact-card-primary .contact-card-glow { background: rgba(74, 182, 128, 0.12); }
+
+.contact-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(160, 174, 250, 0.2);
+  background-color: rgba(255, 255, 255, 0.032);
+  box-shadow: inset 0 1px rgba(255, 255, 255, 0.025), 0 36px 100px rgba(0, 0, 0, 0.2);
+}
+
+.contact-card-primary:hover { border-color: rgba(131, 218, 175, 0.27); }
+.contact-card:hover .contact-card-glow { opacity: 0.8; transform: scale(1.1); }
+
 @keyframes expertise-signal {
   0% { transform: translateX(-130%); opacity: 0; }
   22% { opacity: 1; }
@@ -370,6 +481,8 @@ button { font: inherit; }
   .work-grid { background-size: 44px 44px; }
   .project-visual-node { font-size: 0.44rem; letter-spacing: 0.08em; }
   .expertise-grid { background-size: 56px 100%; }
+  .about-grid { background-size: 48px 48px; }
+  .contact-grid { background-size: 44px 44px; }
 }
 
 @media (prefers-reduced-motion: reduce) {

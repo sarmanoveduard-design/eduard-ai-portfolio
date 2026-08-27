@@ -144,6 +144,38 @@ const en = {
       button: "Discuss a project",
     },
   },
+  about: {
+    eyebrow: "ABOUT",
+    title: ["I don't just add AI features.", "I design working systems."],
+    paragraphs: [
+      "I'm Eduard Sarmanov, an AI Systems Architect and Full-Stack Engineer. I design and build software systems that bring AI, backend services, data, interfaces and external platforms together into a working product.",
+      "I'm most interested in problems where simply calling an AI API is not enough. I analyze the business process, design the architecture and build the system around the actual workflow.",
+    ],
+    identityLabel: "IDENTITY",
+    name: "EDUARD SARMANOV",
+    roles: ["AI Systems Architect", "Full-Stack Engineer"],
+    locationLabel: "LOCATION",
+    location: "South Korea · Remote",
+    focusLabel: "FOCUS",
+    focus: ["AI Systems", "Automation", "RAG", "Agents", "SaaS", "Backend"],
+    principleLabel: "HOW I THINK",
+    principle:
+      "Business problem → system architecture → implementation → measurable working result.",
+  },
+  contact: {
+    eyebrow: "CONTACT",
+    title: ["Have a problem to solve?", "Let's talk."],
+    intro:
+      "Tell me what is currently manual, repetitive or needs AI. I'll help identify how it can be turned into a practical software system.",
+    whatsapp: "WhatsApp",
+    whatsappMessage:
+      "Hi Eduard, I found your portfolio and would like to discuss a project.",
+    telegram: "Telegram",
+    call: "Call",
+    email: "Email",
+    github: "GitHub",
+    openAction: "Open",
+  },
 } as const;
 
 type Widen<T> = T extends string
@@ -296,6 +328,38 @@ const ru = {
       text: "Опишите задачу — помогу определить, что можно автоматизировать и какая архитектура для этого подходит.",
       button: "Обсудить проект",
     },
+  },
+  about: {
+    eyebrow: "ОБО МНЕ",
+    title: ["Проектирую не просто AI-функции,", "а работающие системы."],
+    paragraphs: [
+      "Я — Eduard Sarmanov, AI Systems Architect и Full-Stack Engineer. Проектирую и создаю программные системы, которые объединяют AI, backend, данные, интерфейсы и внешние сервисы в единый рабочий продукт.",
+      "Мне интересны задачи, где недостаточно просто подключить модель через API. Я разбираю бизнес-процесс, проектирую архитектуру и довожу решение до системы, которой можно пользоваться в реальной работе.",
+    ],
+    identityLabel: "IDENTITY",
+    name: "EDUARD SARMANOV",
+    roles: ["AI Systems Architect", "Full-Stack Engineer"],
+    locationLabel: "LOCATION",
+    location: "South Korea · Remote",
+    focusLabel: "FOCUS",
+    focus: ["AI Systems", "Automation", "RAG", "Agents", "SaaS", "Backend"],
+    principleLabel: "ПОДХОД",
+    principle:
+      "Бизнес-задача → архитектура системы → реализация → измеримый рабочий результат.",
+  },
+  contact: {
+    eyebrow: "КОНТАКТЫ",
+    title: ["Есть задача?", "Давайте разберём."],
+    intro:
+      "Расскажите, что сейчас делается вручную, занимает много времени или требует AI. Я помогу определить, как это можно превратить в рабочую систему.",
+    whatsapp: "Написать в WhatsApp",
+    whatsappMessage:
+      "Эдуард, здравствуйте. Я посмотрел ваше портфолио и хотел бы обсудить проект.",
+    telegram: "Telegram",
+    call: "Позвонить",
+    email: "Email",
+    github: "GitHub",
+    openAction: "Открыть",
   },
 } as const satisfies Dictionary;
 
