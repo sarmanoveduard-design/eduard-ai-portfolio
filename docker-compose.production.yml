@@ -1,0 +1,16 @@
+services:
+  portfolio:
+    image: eduard-ai-portfolio:latest
+    container_name: eduard-ai-portfolio
+    restart: unless-stopped
+    init: true
+    ports:
+      - "127.0.0.1:3001:3000"
+    env_file:
+      - .env.production
+    mem_limit: 512m
+    cpus: 0.50
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL

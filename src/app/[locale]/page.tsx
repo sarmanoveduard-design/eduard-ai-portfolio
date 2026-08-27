@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import { connection } from "next/server";
 import { About } from "@/components/portfolio/about";
 import { AiAudit } from "@/components/portfolio/ai-audit";
 import { Contact } from "@/components/portfolio/contact";
@@ -15,6 +16,7 @@ export default async function Home({ params }: PageProps<"/[locale]">) {
   if (!isLocale(locale)) notFound();
 
   const dictionary = dictionaries[locale];
+  await connection();
   const auditAvailability = getAuditAvailability();
 
   return (
