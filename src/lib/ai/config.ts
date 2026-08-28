@@ -22,7 +22,7 @@ export const aiConfig = {
   turnstileExpectedHostname: process.env.TURNSTILE_EXPECTED_HOSTNAME?.trim() || "",
   isProduction,
   timeoutMs: 25_000,
-  gateMaxOutputTokens: 500,
+  gateMaxOutputTokens: 800,
   auditMaxOutputTokens: 1_800,
 } as const;
 

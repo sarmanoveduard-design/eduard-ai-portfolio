@@ -28,6 +28,7 @@ vi.mock("@/lib/security/turnstile", () => ({ verifyTurnstile: mocks.turnstile })
 vi.mock("@/lib/security/client-ip", () => ({ getClientIp: () => "203.0.113.1" }));
 
 import { POST } from "./route";
+import { PurposeGateUnavailableError } from "@/lib/ai/purpose-gate";
 
 const businessProcess = "Заявки приходят в WhatsApp, менеджеры вручную переносят их в CRM и распределяют между сотрудниками отдела продаж.";
 
@@ -75,6 +76,26 @@ describe("AI audit route gates", () => {
     expect(response.status).toBe(403);
     expect(mocks.classifyPurpose).toHaveBeenCalledOnce();
     expect(mocks.createBusinessAudit).not.toHaveBeenCalled();
+  });
+
+  it("returns AI_UNAVAILABLE and safely logs an incomplete purpose gate", async () => {
+    const consoleInfo = vi.spyOn(console, "info").mockImplementation(() => undefined);
+    mocks.classifyPurpose.mockRejectedValue(new PurposeGateUnavailableError("incomplete"));
+
+    const response = await POST(request());
+    expect(response.status).toBe(503);
+    await expect(response.json()).resolves.toEqual({ error: { code: "AI_UNAVAILABLE" } });
+    expect(mocks.createBusinessAudit).not.toHaveBeenCalled();
+
+    const logEntries = consoleInfo.mock.calls.map(([entry]) => JSON.parse(String(entry)) as Record<string, unknown>);
+    expect(logEntries).toContainEqual(expect.objectContaining({
+      outcome: "unavailable",
+      stage: "purpose_gate",
+      reason: "incomplete",
+    }));
+    expect(JSON.stringify(logEntries)).not.toContain(businessProcess);
+    expect(JSON.stringify(logEntries)).not.toContain("test-token");
+    consoleInfo.mockRestore();
   });
 
   it("does not call either model when the global purpose-gate budget is exhausted", async () => {

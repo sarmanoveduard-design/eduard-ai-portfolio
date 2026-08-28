@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { createBusinessAudit } from "@/lib/ai/audit";
 import { aiConfig, isServerPipelineConfigured } from "@/lib/ai/config";
 import { isModerationBlocked } from "@/lib/ai/moderation";
-import { classifyPurpose, detectImmediateDenial } from "@/lib/ai/purpose-gate";
+import { classifyPurpose, detectImmediateDenial, getPurposeGateFailureReason } from "@/lib/ai/purpose-gate";
 import { parseAuditRequest } from "@/lib/ai/schemas";
 import { createRateLimiter, hashVisitor } from "@/lib/security/rate-limit";
 import { verifyTurnstile } from "@/lib/security/turnstile";
@@ -90,7 +90,15 @@ export async function POST(request: Request) {
       return errorResponse(503, "AI_UNAVAILABLE");
     }
 
-    const gate = await classifyPurpose(input.process, signal);
+    let gate;
+    try {
+      gate = await classifyPurpose(input.process, signal);
+    } catch (error) {
+      const reason = getPurposeGateFailureReason(error)
+        ?? (error instanceof Error && (error.name === "AbortError" || error.name === "TimeoutError") ? "timeout" : "request_failed");
+      log("unavailable", { stage: "purpose_gate", reason });
+      return errorResponse(503, "AI_UNAVAILABLE");
+    }
     if (!gate.allowed || !["business_automation", "software_system", "ai_business_usecase"].includes(gate.category)) {
       log("not_allowed", { stage: "purpose_gate", category: gate.category });
       return errorResponse(403, "NOT_ALLOWED");
