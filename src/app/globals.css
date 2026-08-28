@@ -571,7 +571,13 @@ button { font: inherit; }
   .project-visual-node { font-size: 0.44rem; letter-spacing: 0.08em; }
   .expertise-grid { background-size: 56px 100%; }
   .audit-grid { background-size: 44px 44px; }
-  .audit-title { font-size: clamp(2.75rem, 13vw, 4.4rem); }
+  .audit-title {
+    max-width: 100%;
+    font-size: clamp(2.2rem, 10.8vw, 2.5rem);
+    line-height: .98;
+    letter-spacing: -.052em;
+    overflow-wrap: anywhere;
+  }
   .about-grid { background-size: 48px 48px; }
   .contact-grid { background-size: 44px 44px; }
 }
