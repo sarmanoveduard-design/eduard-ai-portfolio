@@ -18,7 +18,12 @@ export async function createBusinessAudit(input: string, locale: Locale, signal:
     text: { format: { type: "json_schema", name: "business_automation_audit", strict: true, schema: auditJsonSchema } },
   }, { signal });
 
-  const parsed: unknown = JSON.parse(response.output_text);
-  if (!isAuditResult(parsed)) throw new Error("INVALID_AUDIT_OUTPUT");
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(response.output_text) as unknown;
+  } catch {
+    throw new Error("AI_UNAVAILABLE");
+  }
+  if (!isAuditResult(parsed)) throw new Error("AI_UNAVAILABLE");
   return { result: parsed, tokens: response.usage?.total_tokens };
 }

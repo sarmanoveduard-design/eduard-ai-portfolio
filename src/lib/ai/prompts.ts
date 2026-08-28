@@ -23,8 +23,15 @@ development cost, financial outcomes, or legal guarantees. When uncertain, use l
 "a possible option" or "may be required". Ask focused questions when information is insufficient.
 Start with the plainLanguage block for a non-technical business reader. Describe the current process,
 what can be automated, what AI would do, and what remains a human responsibility. Use simple language
-and minimize technical terms; when a term is necessary, explain it in everyday words. Each list must
-contain 1-4 concise items. Do not invent ROI, percentages, timelines, costs, or unprovided facts.
+and minimize technical terms; when a term is necessary, explain it in everyday words. Write currentProcess
+as 1-2 complete sentences, targeting roughly 220-260 characters; never cut a word or sentence to meet a
+length target. Each plainLanguage list must contain 1-4 concise items, each targeting roughly 100-130
+characters and staying comfortably below its hard limit. Write summary as 2-3 complete sentences that
+preserve the technical meaning and stay comfortably below its hard limit.
+Every text field must end with a complete word, and every sentence must be grammatically complete. Never
+insert random characters or isolated characters from another writing system. In Russian responses, use
+Russian prose except for normal names and established terms such as WhatsApp, CRM, API, AI, and SaaS; apply
+the equivalent rule to English responses. Do not invent ROI, percentages, timelines, costs, or unprovided facts.
 Return a compact preliminary technical analysis, not a final architecture. Do not output HTML or Markdown.`;
 }
 

@@ -4,6 +4,9 @@ export const MIN_AUDIT_INPUT = 60;
 export const MAX_AUDIT_INPUT = 1500;
 export const MAX_TURNSTILE_TOKEN_LENGTH = 2048;
 export const TURNSTILE_ACTION = "ai_audit";
+export const PLAIN_CURRENT_PROCESS_MAX_LENGTH = 450;
+export const PLAIN_LIST_ITEM_MAX_LENGTH = 180;
+export const AUDIT_SUMMARY_MAX_LENGTH = 600;
 
 export const architectureNodeTypes = [
   "source",
@@ -75,13 +78,13 @@ export const auditJsonSchema = {
       additionalProperties: false,
       required: ["currentProcess", "whatCanBeAutomated", "aiRole", "humanRole"],
       properties: {
-        currentProcess: shortText(300),
-        whatCanBeAutomated: { type: "array", minItems: 1, maxItems: 4, items: shortText(180) },
-        aiRole: { type: "array", minItems: 1, maxItems: 4, items: shortText(180) },
-        humanRole: { type: "array", minItems: 1, maxItems: 4, items: shortText(180) },
+        currentProcess: shortText(PLAIN_CURRENT_PROCESS_MAX_LENGTH),
+        whatCanBeAutomated: { type: "array", minItems: 1, maxItems: 4, items: shortText(PLAIN_LIST_ITEM_MAX_LENGTH) },
+        aiRole: { type: "array", minItems: 1, maxItems: 4, items: shortText(PLAIN_LIST_ITEM_MAX_LENGTH) },
+        humanRole: { type: "array", minItems: 1, maxItems: 4, items: shortText(PLAIN_LIST_ITEM_MAX_LENGTH) },
       },
     },
-    summary: shortText(600),
+    summary: shortText(AUDIT_SUMMARY_MAX_LENGTH),
     automationOpportunities: {
       type: "array",
       minItems: 2,
@@ -164,6 +167,36 @@ function isTextArray(value: unknown, min: number, max: number, maxLength: number
     && value.every((item) => isText(item, maxLength));
 }
 
+const trailingForeignGlyph = /[\p{Script=Cyrillic}\p{Script=Latin}][\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}\p{Script=Hangul}\p{Script=Arabic}\p{Script=Hebrew}](?:[.!?…]["'”’)}\]]*)?$/u;
+const completeTokenEnding = /[\p{L}\p{N}.!?…%"'”’)}\]]$/u;
+const completeSentenceEnding = /[.!?…]["'”’)}\]]*$/u;
+
+function hasValidTextQuality(value: string, maxLength: number, requireCompleteSentence = false) {
+  const text = value.trim();
+  if (!text || /\uFFFD/u.test(text) || /[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/u.test(text)) return false;
+  if (trailingForeignGlyph.test(text) || !completeTokenEnding.test(text)) return false;
+  if (requireCompleteSentence && !completeSentenceEnding.test(text)) return false;
+  if (value.length === maxLength && !completeSentenceEnding.test(text)) return false;
+  return true;
+}
+
+export function hasValidAuditTextQuality(result: AuditResult) {
+  const fields: Array<[string, number, boolean?]> = [
+    [result.plainLanguage.currentProcess, PLAIN_CURRENT_PROCESS_MAX_LENGTH, true],
+    [result.summary, AUDIT_SUMMARY_MAX_LENGTH, true],
+    ...result.plainLanguage.whatCanBeAutomated.map((item) => [item, PLAIN_LIST_ITEM_MAX_LENGTH] as [string, number]),
+    ...result.plainLanguage.aiRole.map((item) => [item, PLAIN_LIST_ITEM_MAX_LENGTH] as [string, number]),
+    ...result.plainLanguage.humanRole.map((item) => [item, PLAIN_LIST_ITEM_MAX_LENGTH] as [string, number]),
+    ...result.automationOpportunities.flatMap((item) => [[item.title, 100], [item.description, 400]] as Array<[string, number]>),
+    ...result.architecture.map((item) => [item.label, 100] as [string, number]),
+    ...result.requirements.map((item) => [item, 220] as [string, number]),
+    ...result.questions.map((item) => [item, 220] as [string, number]),
+    ...result.risks.map((item) => [item, 220] as [string, number]),
+    [result.nextStep, 300],
+  ];
+  return fields.every(([value, maxLength, requireCompleteSentence]) => hasValidTextQuality(value, maxLength, requireCompleteSentence));
+}
+
 export function isGateResult(value: unknown): value is GateResult {
   if (!value || typeof value !== "object") return false;
   const result = value as Record<string, unknown>;
@@ -182,11 +215,11 @@ export function isAuditResult(value: unknown): value is AuditResult {
     && plainLanguage !== undefined
     && typeof plainLanguage === "object"
     && !Array.isArray(plainLanguage)
-    && isText(plainLanguage.currentProcess, 300)
-    && isTextArray(plainLanguage.whatCanBeAutomated, 1, 4, 180)
-    && isTextArray(plainLanguage.aiRole, 1, 4, 180)
-    && isTextArray(plainLanguage.humanRole, 1, 4, 180)
-    && isText(result.summary, 600)
+    && isText(plainLanguage.currentProcess, PLAIN_CURRENT_PROCESS_MAX_LENGTH)
+    && isTextArray(plainLanguage.whatCanBeAutomated, 1, 4, PLAIN_LIST_ITEM_MAX_LENGTH)
+    && isTextArray(plainLanguage.aiRole, 1, 4, PLAIN_LIST_ITEM_MAX_LENGTH)
+    && isTextArray(plainLanguage.humanRole, 1, 4, PLAIN_LIST_ITEM_MAX_LENGTH)
+    && isText(result.summary, AUDIT_SUMMARY_MAX_LENGTH)
     && Array.isArray(opportunities) && opportunities.length >= 2 && opportunities.length <= 5
     && opportunities.every((item) => item && typeof item === "object" && isText(item.title, 100) && isText(item.description, 400))
     && Array.isArray(architecture) && architecture.length >= 3 && architecture.length <= 7
@@ -194,5 +227,6 @@ export function isAuditResult(value: unknown): value is AuditResult {
     && isTextArray(result.requirements, 1, 5, 220)
     && isTextArray(result.questions, 1, 4, 220)
     && isTextArray(result.risks, 0, 3, 220)
-    && isText(result.nextStep, 300);
+    && isText(result.nextStep, 300)
+    && hasValidAuditTextQuality(result as AuditResult);
 }
