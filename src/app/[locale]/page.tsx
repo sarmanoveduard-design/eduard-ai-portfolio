@@ -21,7 +21,7 @@ export default async function Home({ params }: PageProps<"/[locale]">) {
 
   return (
     <>
-      <Navbar locale={locale} dictionary={dictionary.nav} />
+      <Navbar locale={locale} dictionary={dictionary.nav} whatsappMessage={dictionary.contact.whatsappMessage} />
       <main className="portfolio-shell">
         <Hero dictionary={dictionary.hero} />
         <SelectedWork dictionary={dictionary.work} />

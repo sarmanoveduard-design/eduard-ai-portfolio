@@ -6,16 +6,61 @@ import { type MouseEvent, useEffect, useState } from "react";
 import type { Dictionary } from "@/i18n/dictionaries";
 import type { Locale } from "@/i18n/config";
 import { scrollToSection } from "@/lib/section-navigation";
+import { getWhatsAppLink } from "./contact-links";
 import { LanguageSwitcher } from "./language-switcher";
 
 type NavbarProps = {
   locale: Locale;
   dictionary: Dictionary["nav"];
+  whatsappMessage: Dictionary["contact"]["whatsappMessage"];
 };
 
-export function Navbar({ locale, dictionary }: NavbarProps) {
+type NavbarWhatsAppCtaProps = {
+  href: string;
+  label: string;
+  mobile?: boolean;
+  onClick?: () => void;
+};
+
+type NavbarSectionLinkProps = {
+  id: string;
+  label: string;
+  onClick: (event: MouseEvent<HTMLAnchorElement>) => void;
+};
+
+export function NavbarSectionLink({ id, label, onClick }: NavbarSectionLinkProps) {
+  return (
+    <a
+      href={`#${id}`}
+      onClick={onClick}
+      className="rounded-sm text-sm text-white/55 transition-colors hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#9eacff]"
+    >
+      {label}
+    </a>
+  );
+}
+
+export function NavbarWhatsAppCta({ href, label, mobile = false, onClick }: NavbarWhatsAppCtaProps) {
+  return (
+    <a
+      href={href}
+      target="_blank"
+      rel="noopener noreferrer"
+      onClick={onClick}
+      data-testid={mobile ? "navbar-cta-mobile" : "navbar-cta-desktop"}
+      className={mobile
+        ? "flex h-14 items-center justify-center rounded-full bg-white text-sm font-semibold text-black outline-none focus-visible:ring-2 focus-visible:ring-[#9eacff]"
+        : "rounded-full border border-white/15 bg-white px-5 py-2.5 text-sm font-medium text-[#0b0c0e] transition duration-300 hover:-translate-y-0.5 hover:bg-[#dfe3ff] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#9eacff] focus-visible:ring-offset-4 focus-visible:ring-offset-[#08090b]"}
+    >
+      {label}
+    </a>
+  );
+}
+
+export function Navbar({ locale, dictionary, whatsappMessage }: NavbarProps) {
   const [open, setOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const whatsappHref = getWhatsAppLink(whatsappMessage);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 16);
@@ -62,10 +107,10 @@ export function Navbar({ locale, dictionary }: NavbarProps) {
         </a>
         <div className="hidden items-center gap-5 md:flex lg:gap-8">
           <div className="flex items-center gap-4 lg:gap-7">
-            {links.map((link) => <a key={link.label} href={`#${link.id}`} onClick={(event) => handleSectionClick(event, link.id)} className="rounded-sm text-sm text-white/55 transition-colors hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#9eacff]">{link.label}</a>)}
+            {links.map((link) => <NavbarSectionLink key={link.label} id={link.id} label={link.label} onClick={(event) => handleSectionClick(event, link.id)} />)}
           </div>
           <LanguageSwitcher locale={locale} />
-          <a href="#contact" onClick={(event) => handleSectionClick(event, "contact")} className="rounded-full border border-white/15 bg-white px-5 py-2.5 text-sm font-medium text-[#0b0c0e] transition duration-300 hover:-translate-y-0.5 hover:bg-[#dfe3ff] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#9eacff] focus-visible:ring-offset-4 focus-visible:ring-offset-[#08090b]">{dictionary.talk}</a>
+          <NavbarWhatsAppCta href={whatsappHref} label={dictionary.talk} />
         </div>
         <div className="flex items-center gap-2 md:hidden">
           <LanguageSwitcher locale={locale} />
@@ -85,7 +130,7 @@ export function Navbar({ locale, dictionary }: NavbarProps) {
                   </motion.a>
                 ))}
               </div>
-              <a href="#contact" onClick={(event) => handleSectionClick(event, "contact", true)} className="flex h-14 items-center justify-center rounded-full bg-white text-sm font-semibold text-black outline-none focus-visible:ring-2 focus-visible:ring-[#9eacff]">{dictionary.talk}</a>
+              <NavbarWhatsAppCta href={whatsappHref} label={dictionary.talk} mobile onClick={() => setOpen(false)} />
             </div>
           </motion.div>
         )}
