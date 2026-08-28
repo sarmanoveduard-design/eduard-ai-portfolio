@@ -1,6 +1,6 @@
 import type { Locale } from "@/i18n/config";
 
-export const MIN_AUDIT_INPUT = 20;
+export const MIN_AUDIT_INPUT = 60;
 export const MAX_AUDIT_INPUT = 1500;
 export const MAX_TURNSTILE_TOKEN_LENGTH = 2048;
 export const TURNSTILE_ACTION = "ai_audit";
@@ -17,6 +17,12 @@ export const architectureNodeTypes = [
 export type ArchitectureNodeType = (typeof architectureNodeTypes)[number];
 
 export type AuditResult = {
+  plainLanguage: {
+    currentProcess: string;
+    whatCanBeAutomated: string[];
+    aiRole: string[];
+    humanRole: string[];
+  };
   summary: string;
   automationOpportunities: { title: string; description: string }[];
   architecture: { label: string; type: ArchitectureNodeType }[];
@@ -62,8 +68,19 @@ const shortText = (maxLength: number) => ({ type: "string", minLength: 1, maxLen
 export const auditJsonSchema = {
   type: "object",
   additionalProperties: false,
-  required: ["summary", "automationOpportunities", "architecture", "requirements", "questions", "risks", "nextStep"],
+  required: ["plainLanguage", "summary", "automationOpportunities", "architecture", "requirements", "questions", "risks", "nextStep"],
   properties: {
+    plainLanguage: {
+      type: "object",
+      additionalProperties: false,
+      required: ["currentProcess", "whatCanBeAutomated", "aiRole", "humanRole"],
+      properties: {
+        currentProcess: shortText(300),
+        whatCanBeAutomated: { type: "array", minItems: 1, maxItems: 4, items: shortText(180) },
+        aiRole: { type: "array", minItems: 1, maxItems: 4, items: shortText(180) },
+        humanRole: { type: "array", minItems: 1, maxItems: 4, items: shortText(180) },
+      },
+    },
     summary: shortText(600),
     automationOpportunities: {
       type: "array",
@@ -102,7 +119,7 @@ export function parseAuditRequest(value: unknown): AuditRequest | null {
   const candidate = value as Record<string, unknown>;
   if (typeof candidate.process !== "string" || (candidate.locale !== "en" && candidate.locale !== "ru")) return null;
   const process = candidate.process.trim();
-  if (process.length < MIN_AUDIT_INPUT || process.length > MAX_AUDIT_INPUT) return null;
+  if (!isMeaningfulAuditInput(process)) return null;
   if (typeof candidate.turnstileToken !== "string" || candidate.turnstileToken.length > MAX_TURNSTILE_TOKEN_LENGTH) return null;
   return {
     process,
@@ -111,8 +128,40 @@ export function parseAuditRequest(value: unknown): AuditRequest | null {
   };
 }
 
-function isTextArray(value: unknown, min: number, max: number) {
-  return Array.isArray(value) && value.length >= min && value.length <= max && value.every((item) => typeof item === "string" && item.length > 0);
+export function isMeaningfulAuditInput(input: string) {
+  const text = input.trim();
+  if (text.length < MIN_AUDIT_INPUT || text.length > MAX_AUDIT_INPUT) return false;
+  if (/^https?:\/\/\S+\/?$/iu.test(text) || /^www\.\S+\/?$/iu.test(text)) return false;
+
+  const words = text.match(/[\p{L}\p{N}]+/gu) ?? [];
+  if (words.length < 4) return false;
+
+  const compact = text.replace(/\s/gu, "");
+  const meaningfulCharacters = compact.match(/[\p{L}\p{N}]/gu)?.length ?? 0;
+  if (compact.length === 0 || meaningfulCharacters / compact.length < 0.55) return false;
+
+  const frequencies = new Map<string, number>();
+  for (const character of compact.toLocaleLowerCase()) {
+    frequencies.set(character, (frequencies.get(character) ?? 0) + 1);
+  }
+  const mostFrequent = Math.max(...frequencies.values());
+  if (mostFrequent / compact.length > 0.6) return false;
+
+  const letters = text.match(/\p{L}/gu) ?? [];
+  if (letters.length < 12) return false;
+  const vowels = letters.filter((letter) => /[aeiouyаеёиоуыэюя]/iu.test(letter)).length;
+  return vowels >= 2;
+}
+
+function isText(value: unknown, maxLength: number) {
+  return typeof value === "string" && value.length >= 1 && value.length <= maxLength;
+}
+
+function isTextArray(value: unknown, min: number, max: number, maxLength: number) {
+  return Array.isArray(value)
+    && value.length >= min
+    && value.length <= max
+    && value.every((item) => isText(item, maxLength));
 }
 
 export function isGateResult(value: unknown): value is GateResult {
@@ -128,13 +177,22 @@ export function isAuditResult(value: unknown): value is AuditResult {
   const result = value as Record<string, unknown>;
   const opportunities = result.automationOpportunities;
   const architecture = result.architecture;
-  return typeof result.summary === "string"
+  const plainLanguage = result.plainLanguage as Record<string, unknown> | null | undefined;
+  return plainLanguage !== null
+    && plainLanguage !== undefined
+    && typeof plainLanguage === "object"
+    && !Array.isArray(plainLanguage)
+    && isText(plainLanguage.currentProcess, 300)
+    && isTextArray(plainLanguage.whatCanBeAutomated, 1, 4, 180)
+    && isTextArray(plainLanguage.aiRole, 1, 4, 180)
+    && isTextArray(plainLanguage.humanRole, 1, 4, 180)
+    && isText(result.summary, 600)
     && Array.isArray(opportunities) && opportunities.length >= 2 && opportunities.length <= 5
-    && opportunities.every((item) => item && typeof item === "object" && typeof item.title === "string" && typeof item.description === "string")
+    && opportunities.every((item) => item && typeof item === "object" && isText(item.title, 100) && isText(item.description, 400))
     && Array.isArray(architecture) && architecture.length >= 3 && architecture.length <= 7
-    && architecture.every((item) => item && typeof item === "object" && typeof item.label === "string" && architectureNodeTypes.includes(item.type as ArchitectureNodeType))
-    && isTextArray(result.requirements, 1, 5)
-    && isTextArray(result.questions, 1, 4)
-    && isTextArray(result.risks, 0, 3)
-    && typeof result.nextStep === "string";
+    && architecture.every((item) => item && typeof item === "object" && isText(item.label, 100) && architectureNodeTypes.includes(item.type as ArchitectureNodeType))
+    && isTextArray(result.requirements, 1, 5, 220)
+    && isTextArray(result.questions, 1, 4, 220)
+    && isTextArray(result.risks, 0, 3, 220)
+    && isText(result.nextStep, 300);
 }

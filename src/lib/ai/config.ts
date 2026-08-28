@@ -2,6 +2,11 @@ import "server-only";
 
 const isProduction = process.env.NODE_ENV === "production";
 
+function positiveInteger(value: string | undefined, fallback: number) {
+  const parsed = Number(value);
+  return Number.isInteger(parsed) && parsed > 0 ? parsed : fallback;
+}
+
 export const aiConfig = {
   enabled: process.env.AI_AUDIT_ENABLED === "true",
   gateModel: process.env.AI_GATE_MODEL?.trim() || "gpt-5-nano",
@@ -10,6 +15,8 @@ export const aiConfig = {
   redisUrl: process.env.UPSTASH_REDIS_REST_URL?.trim() || "",
   redisToken: process.env.UPSTASH_REDIS_REST_TOKEN?.trim() || "",
   rateLimitSalt: process.env.RATE_LIMIT_SALT?.trim() || "",
+  globalPurposeGateDailyLimit: positiveInteger(process.env.GLOBAL_PURPOSE_GATE_DAILY_LIMIT, 50),
+  globalFullAuditDailyLimit: positiveInteger(process.env.GLOBAL_FULL_AUDIT_DAILY_LIMIT, 20),
   turnstileSiteKey: process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY?.trim() || "",
   turnstileSecretKey: process.env.TURNSTILE_SECRET_KEY?.trim() || "",
   turnstileExpectedHostname: process.env.TURNSTILE_EXPECTED_HOSTNAME?.trim() || "",

@@ -21,6 +21,10 @@ Analyze only facts in the submitted process. Explicitly distinguish assumptions 
 Never invent existing CRM products, APIs, platform capabilities, ROI, savings percentages, timelines,
 development cost, financial outcomes, or legal guarantees. When uncertain, use language equivalent to
 "a possible option" or "may be required". Ask focused questions when information is insufficient.
+Start with the plainLanguage block for a non-technical business reader. Describe the current process,
+what can be automated, what AI would do, and what remains a human responsibility. Use simple language
+and minimize technical terms; when a term is necessary, explain it in everyday words. Each list must
+contain 1-4 concise items. Do not invent ROI, percentages, timelines, costs, or unprovided facts.
 Return a compact preliminary technical analysis, not a final architecture. Do not output HTML or Markdown.`;
 }
 

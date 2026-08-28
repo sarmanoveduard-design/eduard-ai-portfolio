@@ -5,7 +5,7 @@ import { FormEvent, useEffect, useId, useRef, useState } from "react";
 import { ArrowRight, LockKeyhole, RotateCcw, ShieldCheck, Sparkles } from "lucide-react";
 import type { Dictionary } from "@/i18n/dictionaries";
 import type { Locale } from "@/i18n/config";
-import { MAX_AUDIT_INPUT, MIN_AUDIT_INPUT, TURNSTILE_ACTION, type AuditResult } from "@/lib/ai/schemas";
+import { MAX_AUDIT_INPUT, MIN_AUDIT_INPUT, TURNSTILE_ACTION, isMeaningfulAuditInput, type AuditResult } from "@/lib/ai/schemas";
 import { AiAuditResult } from "./ai-audit-result";
 
 declare global {
@@ -92,7 +92,7 @@ export function AiAudit({ dictionary, locale, enabled, turnstileSiteKey }: { dic
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const trimmed = process.trim();
-    if (trimmed.length < MIN_AUDIT_INPUT || trimmed.length > MAX_AUDIT_INPUT) {
+    if (!isMeaningfulAuditInput(trimmed)) {
       setError("INVALID_INPUT");
       return;
     }
@@ -166,7 +166,7 @@ export function AiAudit({ dictionary, locale, enabled, turnstileSiteKey }: { dic
                 </div>
 
                 <div className="mt-4 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                  <button type="submit" disabled={!enabled || loading || process.trim().length < MIN_AUDIT_INPUT} className="group inline-flex h-12 items-center justify-center gap-2.5 rounded-full bg-white px-6 text-sm font-semibold text-[#090a0c] outline-none transition hover:bg-[#dfe3ff] focus-visible:ring-2 focus-visible:ring-[#9eacff] focus-visible:ring-offset-4 focus-visible:ring-offset-[#0b0d12] disabled:cursor-not-allowed disabled:opacity-30">{dictionary.button}<ArrowRight size={15} className="transition-transform group-hover:translate-x-0.5" /></button>
+                  <button type="submit" disabled={!enabled || loading || !isMeaningfulAuditInput(process)} className="group inline-flex h-12 items-center justify-center gap-2.5 rounded-full bg-white px-6 text-sm font-semibold text-[#090a0c] outline-none transition hover:bg-[#dfe3ff] focus-visible:ring-2 focus-visible:ring-[#9eacff] focus-visible:ring-offset-4 focus-visible:ring-offset-[#0b0d12] disabled:cursor-not-allowed disabled:opacity-30">{dictionary.button}<ArrowRight size={15} className="transition-transform group-hover:translate-x-0.5" /></button>
                   <div className="flex items-center gap-2 font-mono text-[8px] tracking-[0.12em] text-white/22"><ShieldCheck size={13} />SECURE · SINGLE AUDIT</div>
                 </div>
                 <p className="mt-7 border-t border-white/[0.06] pt-5 text-xs leading-5 text-white/26">{dictionary.disclaimer}</p>

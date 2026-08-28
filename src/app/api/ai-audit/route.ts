@@ -66,7 +66,8 @@ export async function POST(request: Request) {
       return errorResponse(403, "NOT_ALLOWED");
     }
 
-    const rateLimit = await createRateLimiter().consume(hashVisitor(request));
+    const rateLimiter = createRateLimiter();
+    const rateLimit = await rateLimiter.consume(hashVisitor(request));
     if (!rateLimit.allowed) {
       log("rate_limited", { rateLimit: "denied" });
       return errorResponse(429, "RATE_LIMITED", { "Retry-After": String(rateLimit.retryAfter) });
@@ -83,10 +84,22 @@ export async function POST(request: Request) {
       return errorResponse(403, "NOT_ALLOWED");
     }
 
+    const purposeGateBudget = await rateLimiter.consumeGlobal("purpose_gate");
+    if (!purposeGateBudget.allowed) {
+      log("unavailable", { category: "purpose_gate", global_limit: true });
+      return errorResponse(503, "AI_UNAVAILABLE");
+    }
+
     const gate = await classifyPurpose(input.process, signal);
     if (!gate.allowed || !["business_automation", "software_system", "ai_business_usecase"].includes(gate.category)) {
       log("not_allowed", { stage: "purpose_gate", category: gate.category });
       return errorResponse(403, "NOT_ALLOWED");
+    }
+
+    const fullAuditBudget = await rateLimiter.consumeGlobal("full_audit");
+    if (!fullAuditBudget.allowed) {
+      log("unavailable", { category: "full_audit", global_limit: true });
+      return errorResponse(503, "AI_UNAVAILABLE");
     }
 
     const audit = await createBusinessAudit(input.process, input.locale, signal);

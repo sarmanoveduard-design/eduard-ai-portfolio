@@ -1,4 +1,4 @@
-import { ArrowRight, CircleAlert, CircleHelp, Layers3, ListChecks, Sparkles } from "lucide-react";
+import { ArrowRight, Bot, CircleAlert, CircleHelp, Layers3, ListChecks, MessageSquareText, Sparkles, UserRound, WandSparkles } from "lucide-react";
 import type { Dictionary } from "@/i18n/dictionaries";
 import type { ArchitectureNodeType, AuditResult } from "@/lib/ai/schemas";
 
@@ -28,7 +28,31 @@ function TextList({ items }: { items: string[] }) {
 
 export function AiAuditResult({ result, dictionary }: { result: AuditResult; dictionary: AuditDictionary }) {
   return (
-    <div className="audit-result-grid grid gap-5 xl:grid-cols-[1.08fr_0.92fr]">
+    <div className="space-y-5">
+      <article className="audit-panel relative overflow-hidden rounded-[22px] border border-[#a6b3ff]/[0.14] bg-[#0b0d12]/95 p-6 sm:p-8">
+        <div className="pointer-events-none absolute -right-16 -top-20 size-56 rounded-full bg-[#7487eb]/[0.08] blur-3xl" />
+        <div className="relative flex items-center gap-2 font-mono text-[9px] tracking-[0.18em] text-[#b6c0ff]/65">
+          <MessageSquareText size={13} />{dictionary.sections.plainLanguage}
+        </div>
+        <div className="relative mt-6 grid gap-4 lg:grid-cols-3">
+          <section className="rounded-2xl border border-white/[0.07] bg-white/[0.02] p-5 lg:col-span-3">
+            <h3 className="flex items-center gap-2 text-xs font-medium text-white/55"><Sparkles size={14} className="text-[#9facff]/60" />{dictionary.sections.currentProcess}</h3>
+            <p className="mt-3 text-[15px] leading-7 text-white/68">{result.plainLanguage.currentProcess}</p>
+          </section>
+          {([
+            [dictionary.sections.whatCanBeAutomated, result.plainLanguage.whatCanBeAutomated, WandSparkles],
+            [dictionary.sections.aiRole, result.plainLanguage.aiRole, Bot],
+            [dictionary.sections.humanRole, result.plainLanguage.humanRole, UserRound],
+          ] as const).map(([title, items, Icon]) => (
+            <section key={title} className="rounded-2xl border border-white/[0.07] bg-white/[0.018] p-5">
+              <h3 className="flex items-center gap-2 text-xs font-medium text-white/55"><Icon size={14} className="text-[#9facff]/60" />{title}</h3>
+              <TextList items={[...items]} />
+            </section>
+          ))}
+        </div>
+      </article>
+
+      <div className="audit-result-grid grid gap-5 xl:grid-cols-[1.08fr_0.92fr]">
       <div className="space-y-5">
         <article className="audit-panel rounded-[22px] border border-white/[0.08] bg-[#0b0d12]/90 p-6 sm:p-8">
           <div className="flex items-center gap-2 font-mono text-[9px] tracking-[0.18em] text-[#a4b0fa]/55"><Sparkles size={13} />{dictionary.sections.summary}</div>
@@ -92,6 +116,7 @@ export function AiAuditResult({ result, dictionary }: { result: AuditResult; dic
           <p className="mt-3 text-sm leading-6 text-white/42">{result.nextStep}</p>
           <a href="#contact" className="group mt-6 inline-flex h-11 items-center gap-2 rounded-full bg-white px-5 text-sm font-semibold text-[#090a0c] outline-none transition hover:bg-[#dfe3ff] focus-visible:ring-2 focus-visible:ring-[#9eacff] focus-visible:ring-offset-4 focus-visible:ring-offset-[#11131a]">{dictionary.ctaButton}<ArrowRight size={14} className="transition-transform group-hover:translate-x-0.5" /></a>
         </aside>
+      </div>
       </div>
     </div>
   );

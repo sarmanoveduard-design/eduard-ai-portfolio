@@ -2,9 +2,10 @@
 
 import { Menu, X } from "lucide-react";
 import { AnimatePresence, MotionConfig, motion } from "motion/react";
-import { useEffect, useState } from "react";
+import { type MouseEvent, useEffect, useState } from "react";
 import type { Dictionary } from "@/i18n/dictionaries";
 import type { Locale } from "@/i18n/config";
+import { scrollToSection } from "@/lib/section-navigation";
 import { LanguageSwitcher } from "./language-switcher";
 
 type NavbarProps = {
@@ -29,11 +30,24 @@ export function Navbar({ locale, dictionary }: NavbarProps) {
   }, [open]);
 
   const links = [
-    { label: dictionary.projects, href: "#projects" },
-    { label: dictionary.expertise, href: "#expertise" },
-    { label: dictionary.about, href: "#about" },
-    { label: dictionary.contact, href: "#contact" },
+    { label: dictionary.projects, id: "projects" },
+    { label: dictionary.expertise, id: "expertise" },
+    { label: dictionary.about, id: "about" },
+    { label: dictionary.contact, id: "contact" },
   ];
+
+  const handleSectionClick = (event: MouseEvent<HTMLAnchorElement>, id: string, closeMenu = false) => {
+    if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+    if (!document.getElementById(id)) return;
+
+    event.preventDefault();
+    if (closeMenu) {
+      setOpen(false);
+      window.requestAnimationFrame(() => scrollToSection(id));
+      return;
+    }
+    scrollToSection(id);
+  };
 
   return (
     <MotionConfig reducedMotion="user">
@@ -48,10 +62,10 @@ export function Navbar({ locale, dictionary }: NavbarProps) {
         </a>
         <div className="hidden items-center gap-5 md:flex lg:gap-8">
           <div className="flex items-center gap-4 lg:gap-7">
-            {links.map((link) => <a key={link.label} href={link.href} className="rounded-sm text-sm text-white/55 transition-colors hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#9eacff]">{link.label}</a>)}
+            {links.map((link) => <a key={link.label} href={`#${link.id}`} onClick={(event) => handleSectionClick(event, link.id)} className="rounded-sm text-sm text-white/55 transition-colors hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#9eacff]">{link.label}</a>)}
           </div>
           <LanguageSwitcher locale={locale} />
-          <a href="#contact" className="rounded-full border border-white/15 bg-white px-5 py-2.5 text-sm font-medium text-[#0b0c0e] transition duration-300 hover:-translate-y-0.5 hover:bg-[#dfe3ff] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#9eacff] focus-visible:ring-offset-4 focus-visible:ring-offset-[#08090b]">{dictionary.talk}</a>
+          <a href="#contact" onClick={(event) => handleSectionClick(event, "contact")} className="rounded-full border border-white/15 bg-white px-5 py-2.5 text-sm font-medium text-[#0b0c0e] transition duration-300 hover:-translate-y-0.5 hover:bg-[#dfe3ff] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#9eacff] focus-visible:ring-offset-4 focus-visible:ring-offset-[#08090b]">{dictionary.talk}</a>
         </div>
         <div className="flex items-center gap-2 md:hidden">
           <LanguageSwitcher locale={locale} />
@@ -66,12 +80,12 @@ export function Navbar({ locale, dictionary }: NavbarProps) {
             <div className="flex h-full flex-col justify-between">
               <div className="flex flex-col">
                 {links.map((link, index) => (
-                  <motion.a key={link.label} href={link.href} onClick={() => setOpen(false)} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: index * .05 }} className="border-b border-white/[0.07] py-5 text-2xl font-medium tracking-tight text-white/80 outline-none focus-visible:text-[#aab6ff]">
+                  <motion.a key={link.label} href={`#${link.id}`} onClick={(event) => handleSectionClick(event, link.id, true)} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: index * .05 }} className="border-b border-white/[0.07] py-5 text-2xl font-medium tracking-tight text-white/80 outline-none focus-visible:text-[#aab6ff]">
                     <span className="mr-4 font-mono text-[10px] text-[#8694e8]">0{index + 1}</span>{link.label}
                   </motion.a>
                 ))}
               </div>
-              <a href="#contact" onClick={() => setOpen(false)} className="flex h-14 items-center justify-center rounded-full bg-white text-sm font-semibold text-black outline-none focus-visible:ring-2 focus-visible:ring-[#9eacff]">{dictionary.talk}</a>
+              <a href="#contact" onClick={(event) => handleSectionClick(event, "contact", true)} className="flex h-14 items-center justify-center rounded-full bg-white text-sm font-semibold text-black outline-none focus-visible:ring-2 focus-visible:ring-[#9eacff]">{dictionary.talk}</a>
             </div>
           </motion.div>
         )}
