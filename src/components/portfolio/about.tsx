@@ -1,3 +1,4 @@
+import Image from "next/image";
 import type { Dictionary } from "@/i18n/dictionaries";
 
 type AboutDictionary = Dictionary["about"];
@@ -20,9 +21,26 @@ export function About({ dictionary }: { dictionary: AboutDictionary }) {
           <aside className="about-identity relative overflow-hidden rounded-[24px] border border-white/[0.08] bg-[#0b0d11]/80 p-7 sm:p-9 lg:col-span-4 lg:self-stretch">
             <div className="absolute -right-20 -top-20 size-56 rounded-full bg-[#7182dc]/[0.07] blur-3xl" />
             <div className="relative flex h-full flex-col">
-              <span className="font-mono text-[8px] tracking-[0.2em] text-white/22">{dictionary.identityLabel}</span>
-              <h3 className="mt-6 text-xl font-semibold tracking-[0.13em] text-white">{dictionary.name}<span className="text-[#8f9df0]">.</span></h3>
-              <div className="mt-4 space-y-1 font-mono text-[10px] tracking-[0.1em] text-white/38">{dictionary.roles.map((role) => <p key={role}>{role}</p>)}</div>
+              <div className="flex min-w-0 items-start justify-between gap-3 sm:gap-5">
+                <div className="min-w-0">
+                  <span className="font-mono text-[8px] tracking-[0.2em] text-white/22">{dictionary.identityLabel}</span>
+                  <h3 className="mt-5 text-lg font-semibold tracking-[0.1em] text-white sm:mt-6 sm:text-xl sm:tracking-[0.13em]">{dictionary.name}<span className="text-[#8f9df0]">.</span></h3>
+                  <div className="mt-4 space-y-1 font-mono text-[9px] tracking-[0.07em] text-white/38 sm:text-[10px] sm:tracking-[0.1em]">{dictionary.roles.map((role) => <p key={role}>{role}</p>)}</div>
+                </div>
+                <div className="relative h-[116px] w-[90px] shrink-0 rounded-[18px] bg-[linear-gradient(145deg,rgba(255,255,255,0.1),rgba(143,157,240,0.045)_48%,rgba(255,255,255,0.02))] p-px shadow-[0_14px_34px_rgba(0,0,0,0.22),0_0_24px_rgba(113,130,220,0.06)] sm:h-[136px] sm:w-[108px] lg:h-[142px] lg:w-[116px]">
+                  <div className="relative h-full w-full overflow-hidden rounded-[17px] bg-[#0b0d11]">
+                    <Image
+                      src="/images/eduard-portrait.png"
+                      alt="Eduard Sarmanov"
+                      width={232}
+                      height={284}
+                      sizes="(min-width: 1024px) 116px, (min-width: 640px) 108px, 90px"
+                      className="h-full w-full object-cover object-[50%_42%]"
+                    />
+                    <span aria-hidden="true" className="pointer-events-none absolute inset-0 bg-[linear-gradient(180deg,rgba(11,13,17,0.015)_45%,rgba(7,9,13,0.16)_100%)] shadow-[inset_0_0_18px_rgba(6,8,12,0.2)]" />
+                  </div>
+                </div>
+              </div>
 
               <div className="mt-9 border-t border-white/[0.07] pt-6">
                 <span className="font-mono text-[8px] tracking-[0.2em] text-white/22">{dictionary.locationLabel}</span>
