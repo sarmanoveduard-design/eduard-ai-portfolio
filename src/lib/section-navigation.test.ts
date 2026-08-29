@@ -14,9 +14,9 @@ describe("scrollToSection", () => {
       history: { state: { preserved: true }, replaceState },
     });
 
-    expect(scrollToSection("contact")).toBe(true);
+    expect(scrollToSection("ai-audit")).toBe(true);
     expect(scrollIntoView).toHaveBeenCalledWith({ behavior: "smooth", block: "start" });
-    expect(replaceState).toHaveBeenCalledWith({ preserved: true }, "", "#contact");
+    expect(replaceState).toHaveBeenCalledWith({ preserved: true }, "", "#ai-audit");
   });
 
   it("keeps the native link fallback when a section does not exist", () => {

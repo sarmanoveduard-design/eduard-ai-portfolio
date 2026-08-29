@@ -42,12 +42,14 @@ export function Hero({ dictionary }: { dictionary: Dictionary["hero"] }) {
             {dictionary.titleBefore}<span className="title-accent">{dictionary.titleAccent}</span><br />{dictionary.titleAfter}
           </motion.h1>
           <motion.div {...enter(.22)} className="mt-7 max-w-[690px] sm:mt-9">
-            <p className="text-[15px] leading-6 text-white/60 sm:text-[17px] sm:leading-7">{dictionary.description}</p>
+            <div className="space-y-3 text-[15px] leading-6 text-white/65 sm:text-[17px] sm:leading-7">
+              {dictionary.description.map((paragraph) => <p key={paragraph}>{paragraph}</p>)}
+            </div>
             <p className="mt-3 font-mono text-[10px] tracking-[0.06em] text-white/40 sm:text-[11px]">{dictionary.path[0]} <span className="mx-1 text-[#93a1f4]">→</span> {dictionary.path[1]} <span className="mx-1 text-[#93a1f4]">→</span> {dictionary.path[2]}.</p>
           </motion.div>
           <motion.div {...enter(.3)} className="mt-8 flex flex-wrap items-center gap-3 sm:mt-9">
             <a href="#projects" className="group flex h-12 items-center gap-2.5 rounded-full bg-[#f3f3f5] px-5 text-sm font-semibold text-[#090a0c] outline-none transition duration-300 hover:-translate-y-0.5 hover:bg-[#dfe3ff] hover:shadow-[0_12px_35px_rgba(117,135,229,0.14)] focus-visible:ring-2 focus-visible:ring-[#9eacff] focus-visible:ring-offset-4 focus-visible:ring-offset-[#08090b]">{dictionary.explore} <ArrowRight size={15} className="transition-transform duration-300 group-hover:translate-x-0.5" /></a>
-            <a href="#contact" className="flex h-12 items-center rounded-full border border-white/[0.13] bg-white/[0.035] px-5 text-sm font-medium text-white/78 outline-none backdrop-blur-sm transition duration-300 hover:-translate-y-0.5 hover:border-white/25 hover:bg-white/[0.07] hover:text-white focus-visible:ring-2 focus-visible:ring-[#9eacff] focus-visible:ring-offset-4 focus-visible:ring-offset-[#08090b]">{dictionary.discuss}</a>
+            <a href="#ai-audit" className="flex h-12 items-center rounded-full border border-white/[0.13] bg-white/[0.035] px-5 text-sm font-medium text-white/78 outline-none backdrop-blur-sm transition duration-300 hover:-translate-y-0.5 hover:border-white/25 hover:bg-white/[0.07] hover:text-white focus-visible:ring-2 focus-visible:ring-[#9eacff] focus-visible:ring-offset-4 focus-visible:ring-offset-[#08090b]">{dictionary.discuss}</a>
             <a href="https://github.com/sarmanoveduard-design" target="_blank" rel="noopener noreferrer" className="ml-1 flex h-10 items-center gap-1.5 rounded-sm px-2 text-sm text-white/45 outline-none transition hover:text-white focus-visible:ring-2 focus-visible:ring-[#9eacff]">{dictionary.github} <ExternalLink size={12} /></a>
           </motion.div>
           <motion.ul {...enter(.38)} aria-label={dictionary.technologiesLabel} className="mt-8 flex max-w-[760px] flex-wrap items-center gap-y-2 sm:mt-10">

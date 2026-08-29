@@ -23,7 +23,7 @@ export function Expertise({ dictionary }: { dictionary: ExpertiseDictionary }) {
             <div className="mb-6 flex items-center gap-3 font-mono text-[10px] tracking-[0.2em] text-[#9ba9fb]/60"><span className="h-px w-7 bg-[#8f9df0]/50" />{dictionary.eyebrow}</div>
             <h2 id="expertise-title" className="work-title max-w-[820px] font-medium text-[#f0f1f4]">{dictionary.title[0]}<br /><span className="text-white/42">{dictionary.title[1]}</span></h2>
           </div>
-          <p className="max-w-[520px] text-[15px] leading-7 text-white/48 md:justify-self-end sm:text-base">{dictionary.intro}</p>
+          <p className="max-w-[520px] text-[15px] leading-7 text-white/60 md:justify-self-end sm:text-base">{dictionary.intro}</p>
         </header>
 
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-12">
@@ -33,9 +33,10 @@ export function Expertise({ dictionary }: { dictionary: ExpertiseDictionary }) {
               <div className="flex flex-1 flex-col px-3 pb-4 pt-6 sm:px-4 sm:pb-5">
                 <div className="mb-6 flex items-center justify-between"><span className="font-mono text-[9px] tracking-[0.18em] text-[#9facff]/50">SERVICE</span><span className="font-mono text-[10px] text-white/18">0{index + 1}</span></div>
                 <h3 className={`font-medium tracking-[-0.035em] text-white ${index < 2 ? "text-2xl sm:text-3xl" : "text-xl"}`}>{service.title}</h3>
-                <p className="mt-4 text-[14px] leading-6 text-white/44">{service.description}</p>
+                <p className="mt-2 font-mono text-[10px] tracking-[0.12em] text-[#aab6ff]/80 sm:text-[11px]">{service.technicalLabel}</p>
+                <p className="mt-4 text-sm leading-6 text-white/60">{service.description}</p>
                 <ul aria-label={dictionary.examplesLabel} className="mt-6 grid grid-cols-2 gap-x-3 gap-y-2 border-t border-white/[0.055] pt-5">
-                  {service.examples.map((example) => <li key={example} className="flex min-w-0 items-start gap-2 text-[11px] leading-4 text-white/35"><span className="mt-1.5 size-1 shrink-0 rounded-full bg-[#96a5fa]/45" /><span>{example}</span></li>)}
+                  {service.examples.map((example) => <li key={example} className="flex min-w-0 items-start gap-2 text-sm leading-5 text-white/55"><span className="mt-2 size-1 shrink-0 rounded-full bg-[#96a5fa]/55" /><span>{example}</span></li>)}
                 </ul>
                 <ul aria-label={dictionary.stackLabel} className="mt-auto flex flex-wrap gap-x-3 gap-y-1.5 pt-7">
                   {service.tech.map((item) => <li key={item} className="font-mono text-[8px] tracking-[0.08em] text-white/24">{item}</li>)}
@@ -49,9 +50,9 @@ export function Expertise({ dictionary }: { dictionary: ExpertiseDictionary }) {
           <div className="pointer-events-none absolute -right-24 -top-32 size-80 rounded-full bg-[#7284e6]/[0.1] blur-3xl" />
           <div className="relative max-w-[760px]">
             <h3 className="text-2xl font-medium tracking-[-0.035em] text-white sm:text-3xl">{dictionary.cta.title}</h3>
-            <p className="mt-3 max-w-[690px] text-sm leading-6 text-white/42 sm:text-[15px]">{dictionary.cta.text}</p>
+            <p className="mt-3 max-w-[690px] text-sm leading-6 text-white/60 sm:text-[15px]">{dictionary.cta.text}</p>
           </div>
-          <a href="#contact" className="group relative mt-7 inline-flex h-12 shrink-0 items-center gap-2.5 rounded-full bg-white px-5 text-sm font-semibold text-[#090a0c] outline-none transition duration-300 hover:bg-[#dfe3ff] focus-visible:ring-2 focus-visible:ring-[#9eacff] focus-visible:ring-offset-4 focus-visible:ring-offset-[#0d0f15] lg:ml-10 lg:mt-0">{dictionary.cta.button}<ArrowRight size={15} className="transition-transform group-hover:translate-x-0.5" /></a>
+          <a href="#ai-audit" className="group relative mt-7 inline-flex h-12 shrink-0 items-center gap-2.5 rounded-full bg-white px-5 text-sm font-semibold text-[#090a0c] outline-none transition duration-300 hover:bg-[#dfe3ff] focus-visible:ring-2 focus-visible:ring-[#9eacff] focus-visible:ring-offset-4 focus-visible:ring-offset-[#0d0f15] lg:ml-10 lg:mt-0">{dictionary.cta.button}<ArrowRight size={15} className="transition-transform group-hover:translate-x-0.5" /></a>
         </aside>
       </div>
     </section>

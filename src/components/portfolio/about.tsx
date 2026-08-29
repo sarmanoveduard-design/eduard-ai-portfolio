@@ -13,7 +13,7 @@ export function About({ dictionary }: { dictionary: AboutDictionary }) {
         <div className="grid gap-14 lg:grid-cols-12 lg:gap-8">
           <div className="lg:col-span-8">
             <h2 id="about-title" className="about-title max-w-[1050px] font-medium text-[#f0f1f4]">{dictionary.title[0]}<br /><span className="text-white/42">{dictionary.title[1]}</span></h2>
-            <div className="mt-12 grid max-w-[980px] gap-6 border-t border-white/[0.07] pt-8 text-[15px] leading-7 text-white/48 sm:grid-cols-2 sm:text-base sm:leading-8 lg:mt-16">
+            <div className="mt-12 grid max-w-[980px] gap-6 border-t border-white/[0.07] pt-8 text-[15px] leading-7 text-white/62 sm:text-base sm:leading-8 md:grid-cols-3 lg:mt-16">
               {dictionary.paragraphs.map((paragraph) => <p key={paragraph}>{paragraph}</p>)}
             </div>
           </div>

@@ -136,7 +136,7 @@ export function AiAudit({ dictionary, locale, enabled, turnstileSiteKey }: { dic
             <div className="mb-6 flex items-center gap-3 font-mono text-[10px] tracking-[0.2em] text-[#9ba9fb]/60"><span className="h-px w-7 bg-[#8f9df0]/50" />{dictionary.eyebrow}</div>
             <h2 id="ai-audit-title" className="audit-title w-full min-w-0 max-w-[980px] font-medium text-[#f0f1f4]">{dictionary.title[0]}<br /><span className="title-accent">{dictionary.title[1]}</span></h2>
           </div>
-          <p className="min-w-0 max-w-[560px] text-[15px] leading-7 text-white/48 [overflow-wrap:anywhere] md:justify-self-end sm:text-base">{dictionary.description}</p>
+          <p className="min-w-0 max-w-[560px] text-[15px] leading-7 text-white/62 [overflow-wrap:anywhere] md:justify-self-end sm:text-base">{dictionary.description}</p>
         </header>
 
         {result ? (
@@ -151,10 +151,10 @@ export function AiAudit({ dictionary, locale, enabled, turnstileSiteKey }: { dic
               <div className="relative min-w-0 max-w-full">
                 <div className="mb-5 flex items-center justify-between gap-4"><label htmlFor={inputId} className="text-sm font-medium text-white/72">{dictionary.inputLabel}</label><span className="font-mono text-[9px] tabular-nums text-white/28">{process.length} / {MAX_AUDIT_INPUT}</span></div>
                 <div className="audit-input-shell min-w-0 max-w-full rounded-[18px] border border-white/[0.09] bg-[#07090d] p-1 transition focus-within:border-[#9eacff]/30 focus-within:shadow-[0_0_0_3px_rgba(128,146,240,0.06)]">
-                  <textarea id={inputId} value={process} onChange={(event) => { setProcess(event.target.value.slice(0, MAX_AUDIT_INPUT)); setError(null); }} maxLength={MAX_AUDIT_INPUT} minLength={MIN_AUDIT_INPUT} required disabled={!enabled || loading} placeholder={dictionary.placeholder} className="min-h-[250px] w-full resize-y rounded-[15px] bg-transparent px-4 py-4 text-[15px] leading-7 text-white/72 outline-none placeholder:text-white/20 disabled:cursor-not-allowed disabled:opacity-45 sm:min-h-[290px] sm:px-5 sm:py-5" />
+                  <textarea id={inputId} value={process} onChange={(event) => { setProcess(event.target.value.slice(0, MAX_AUDIT_INPUT)); setError(null); }} maxLength={MAX_AUDIT_INPUT} minLength={MIN_AUDIT_INPUT} required disabled={!enabled || loading} placeholder={dictionary.placeholder} className="min-h-[250px] w-full resize-y rounded-[15px] bg-transparent px-4 py-4 text-[15px] leading-7 text-white/72 outline-none placeholder:text-white/38 disabled:cursor-not-allowed disabled:opacity-45 sm:min-h-[290px] sm:px-5 sm:py-5" />
                 </div>
 
-                <div className="mt-5 flex items-start gap-2.5 text-xs leading-5 text-white/30"><LockKeyhole size={13} className="mt-0.5 shrink-0 text-[#9eacff]/45" /><p>{dictionary.privacy}</p></div>
+                <div className="mt-5 flex items-start gap-2.5 text-sm leading-6 text-white/55"><LockKeyhole size={14} className="mt-1 shrink-0 text-[#9eacff]/55" /><p>{dictionary.privacy}</p></div>
 
                 {turnstileSiteKey && enabled && <div ref={turnstileRef} className="mt-5 min-h-[65px] w-full min-w-0 max-w-full" />}
 
@@ -169,7 +169,8 @@ export function AiAudit({ dictionary, locale, enabled, turnstileSiteKey }: { dic
                   <button type="submit" disabled={!enabled || loading || !isMeaningfulAuditInput(process)} className="group inline-flex h-12 items-center justify-center gap-2.5 rounded-full bg-white px-6 text-sm font-semibold text-[#090a0c] outline-none transition hover:bg-[#dfe3ff] focus-visible:ring-2 focus-visible:ring-[#9eacff] focus-visible:ring-offset-4 focus-visible:ring-offset-[#0b0d12] disabled:cursor-not-allowed disabled:opacity-30">{dictionary.button}<ArrowRight size={15} className="transition-transform group-hover:translate-x-0.5" /></button>
                   <div className="flex items-center gap-2 font-mono text-[8px] tracking-[0.12em] text-white/22"><ShieldCheck size={13} />SECURE · SINGLE AUDIT</div>
                 </div>
-                <p className="mt-7 border-t border-white/[0.06] pt-5 text-xs leading-5 text-white/26">{dictionary.disclaimer}</p>
+                <p className="mt-4 text-sm leading-6 text-[#cbd2ff]/65">{dictionary.simpleHint}</p>
+                <p className="mt-7 border-t border-white/[0.06] pt-5 text-xs leading-5 text-white/48">{dictionary.disclaimer}</p>
               </div>
             </form>
 

@@ -2,7 +2,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 import { dictionaries } from "@/i18n/dictionaries";
 import { getWhatsAppLink } from "./contact-links";
-import { NavbarSectionLink, NavbarWhatsAppCta } from "./navbar";
+import { NavbarMobileSectionLink, NavbarSectionLink, NavbarWhatsAppCta } from "./navbar";
 
 describe("Navbar calls to action", () => {
   it.each(["en", "ru"] as const)("uses the localized WhatsApp link for desktop and mobile CTAs in %s", (locale) => {
@@ -23,13 +23,21 @@ describe("Navbar calls to action", () => {
     }
   });
 
-  it("keeps the regular Contact navigation item linked to #contact", () => {
-    const dictionary = dictionaries.en;
+  it.each(["en", "ru"] as const)("links desktop AI Analysis to #ai-audit in %s", (locale) => {
     const markup = renderToStaticMarkup(
-      <NavbarSectionLink id="contact" label={dictionary.nav.contact} onClick={() => undefined} />,
+      <NavbarSectionLink id="ai-audit" label={dictionaries[locale].nav.audit} accent onClick={() => undefined} />,
     );
 
-    expect(markup).toContain('href="#contact"');
-    expect(markup).toContain(`>${dictionary.nav.contact}</a>`);
+    expect(markup).toContain('href="#ai-audit"');
+    expect(markup).toContain(dictionaries[locale].nav.audit);
+  });
+
+  it.each(["en", "ru"] as const)("links mobile AI Analysis to #ai-audit in %s", (locale) => {
+    const markup = renderToStaticMarkup(
+      <NavbarMobileSectionLink id="ai-audit" label={dictionaries[locale].nav.audit} accent index={2} onClick={() => undefined} />,
+    );
+
+    expect(markup).toContain('href="#ai-audit"');
+    expect(markup).toContain(dictionaries[locale].nav.audit);
   });
 });
