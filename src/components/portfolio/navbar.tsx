@@ -113,7 +113,7 @@ export function Navbar({ locale, dictionary, whatsappMessage }: NavbarProps) {
     <header className={`fixed inset-x-0 top-0 z-50 border-b transition-all duration-500 ${scrolled || open ? "border-white/[0.07] bg-[#08090b]/80 backdrop-blur-xl" : "border-transparent bg-transparent"}`}>
       <nav aria-label={dictionary.label} className="mx-auto flex h-[72px] w-full max-w-[1600px] items-center justify-between px-5 sm:px-8 lg:px-12">
         <a href="#top" aria-label="Eduard Sarmanov, home" className="group rounded-sm text-white outline-none focus-visible:ring-2 focus-visible:ring-[#9eacff] focus-visible:ring-offset-4 focus-visible:ring-offset-[#08090b]">
-          <span className="block text-[13px] font-semibold tracking-[0.14em] xl:hidden">E. SARMANOV<span className="text-[#8d9cff] transition-colors group-hover:text-[#b7c0ff]">.</span></span>
+          <span className="block text-[13px] font-semibold tracking-[0.14em] xl:hidden">Eduard<span className="text-[#8d9cff] transition-colors group-hover:text-[#b7c0ff]">.S</span></span>
           <span className="hidden xl:block">
             <span className="block text-[13px] font-semibold tracking-[0.14em]">EDUARD SARMANOV<span className="text-[#8d9cff] transition-colors group-hover:text-[#b7c0ff]">.</span></span>
             <span className="mt-1 block font-mono text-[7px] font-medium tracking-[0.2em] text-white/28">AI SYSTEMS ARCHITECT</span>
