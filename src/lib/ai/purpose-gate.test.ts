@@ -62,9 +62,13 @@ describe("AI purpose classification response handling", () => {
     });
 
     await expect(classifyPurpose(allowedProcesses[0], AbortSignal.timeout(1_000))).resolves.toEqual({
-      allowed: true,
-      category: "business_automation",
-      reason: "real workflow",
+      result: {
+        allowed: true,
+        category: "business_automation",
+        reason: "real workflow",
+      },
+      usage: {},
+      attempts: 1,
     });
     expect(mocks.createResponse).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -93,14 +97,24 @@ describe("AI purpose classification response handling", () => {
 
   it("retries an incomplete response once and accepts the completed response", async () => {
     mocks.createResponse
-      .mockResolvedValueOnce({ status: "incomplete", incomplete_details: { reason: "max_output_tokens" }, output_text: "" })
+      .mockResolvedValueOnce({
+        status: "incomplete",
+        incomplete_details: { reason: "max_output_tokens" },
+        output_text: "",
+        usage: { input_tokens: 100, output_tokens: 20, total_tokens: 120, input_tokens_details: { cached_tokens: 40 } },
+      })
       .mockResolvedValueOnce({
         status: "completed",
         incomplete_details: null,
         output_text: JSON.stringify({ allowed: true, category: "business_automation", reason: "real workflow" }),
+        usage: { input_tokens: 110, output_tokens: 15, total_tokens: 125, input_tokens_details: { cached_tokens: 50 } },
       });
 
-    await expect(classifyPurpose(allowedProcesses[0], AbortSignal.timeout(1_000))).resolves.toMatchObject({ allowed: true });
+    await expect(classifyPurpose(allowedProcesses[0], AbortSignal.timeout(1_000))).resolves.toEqual({
+      result: { allowed: true, category: "business_automation", reason: "real workflow" },
+      usage: { inputTokens: 210, outputTokens: 35, totalTokens: 245, cachedInputTokens: 90 },
+      attempts: 2,
+    });
     expect(mocks.createResponse).toHaveBeenCalledTimes(2);
   });
 
@@ -130,8 +144,23 @@ describe("AI purpose classification response handling", () => {
     });
 
     await expect(classifyPurpose("Расскажи последние новости политики за сегодняшний день подробно.", AbortSignal.timeout(1_000))).resolves.toMatchObject({
-      allowed: false,
-      category: "off_topic",
+      result: { allowed: false, category: "off_topic" },
+      attempts: 1,
+    });
+    expect(mocks.createResponse).toHaveBeenCalledOnce();
+  });
+
+  it("records usage and cached input tokens for one successful attempt", async () => {
+    mocks.createResponse.mockResolvedValue({
+      status: "completed",
+      incomplete_details: null,
+      output_text: JSON.stringify({ allowed: true, category: "business_automation", reason: "real workflow" }),
+      usage: { input_tokens: 90, output_tokens: 12, total_tokens: 102, input_tokens_details: { cached_tokens: 32 } },
+    });
+
+    await expect(classifyPurpose(allowedProcesses[0], AbortSignal.timeout(1_000))).resolves.toMatchObject({
+      usage: { inputTokens: 90, outputTokens: 12, totalTokens: 102, cachedInputTokens: 32 },
+      attempts: 1,
     });
     expect(mocks.createResponse).toHaveBeenCalledOnce();
   });

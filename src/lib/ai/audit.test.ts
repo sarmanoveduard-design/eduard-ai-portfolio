@@ -72,11 +72,26 @@ describe("business audit output quality", () => {
 
   it("retries an incomplete response and returns a valid second response", async () => {
     mocks.createResponse
-      .mockResolvedValueOnce({ status: "incomplete", incomplete_details: { reason: "max_output_tokens" }, output_text: "" })
-      .mockResolvedValueOnce({ status: "completed", incomplete_details: null, output_text: JSON.stringify(validAudit), usage: { total_tokens: 500 } });
+      .mockResolvedValueOnce({
+        status: "incomplete",
+        incomplete_details: { reason: "max_output_tokens" },
+        output_text: "",
+        usage: { input_tokens: 300, output_tokens: 100, total_tokens: 400, input_tokens_details: { cached_tokens: 120 } },
+      })
+      .mockResolvedValueOnce({
+        status: "completed",
+        incomplete_details: null,
+        output_text: JSON.stringify(validAudit),
+        usage: { input_tokens: 320, output_tokens: 180, total_tokens: 500, input_tokens_details: { cached_tokens: 140 } },
+      });
 
     await expect(createBusinessAudit("Менеджеры вручную обрабатывают заявки клиентов и переносят данные в CRM.", "ru", AbortSignal.timeout(1_000)))
-      .resolves.toMatchObject({ result: validAudit, tokens: 500, attempts: 2 });
+      .resolves.toMatchObject({
+        result: validAudit,
+        tokens: 900,
+        usage: { inputTokens: 620, outputTokens: 280, totalTokens: 900, cachedInputTokens: 260 },
+        attempts: 2,
+      });
     expect(mocks.createResponse).toHaveBeenCalledTimes(2);
   });
 
@@ -91,10 +106,27 @@ describe("business audit output quality", () => {
   });
 
   it("reports a typed reason after two incomplete attempts", async () => {
-    mocks.createResponse.mockResolvedValue({ status: "incomplete", incomplete_details: { reason: "max_output_tokens" }, output_text: "" });
+    mocks.createResponse
+      .mockResolvedValueOnce({
+        status: "incomplete",
+        incomplete_details: { reason: "max_output_tokens" },
+        output_text: "",
+        usage: { input_tokens: 300, output_tokens: 100, total_tokens: 400, input_tokens_details: { cached_tokens: 120 } },
+      })
+      .mockResolvedValueOnce({
+        status: "incomplete",
+        incomplete_details: { reason: "max_output_tokens" },
+        output_text: "",
+        usage: { input_tokens: 320, output_tokens: 180, total_tokens: 500, input_tokens_details: { cached_tokens: 140 } },
+      });
 
     await expect(createBusinessAudit("Менеджеры вручную обрабатывают заявки клиентов и переносят данные в CRM.", "ru", AbortSignal.timeout(1_000)))
-      .rejects.toMatchObject({ stage: "full_audit", reason: "incomplete", attempts: 2 });
+      .rejects.toMatchObject({
+        stage: "full_audit",
+        reason: "incomplete",
+        attempts: 2,
+        usage: { inputTokens: 620, outputTokens: 280, totalTokens: 900, cachedInputTokens: 260 },
+      });
     expect(mocks.createResponse).toHaveBeenCalledTimes(2);
   });
 
@@ -108,5 +140,33 @@ describe("business audit output quality", () => {
     await expect(createBusinessAudit("Менеджеры вручную обрабатывают заявки клиентов и переносят данные в CRM.", "ru", controller.signal))
       .rejects.toMatchObject({ reason: "timeout", attempts: 1 });
     expect(mocks.createResponse).toHaveBeenCalledOnce();
+  });
+
+  it("records input, output, total, and cached tokens for one successful attempt", async () => {
+    mocks.createResponse.mockResolvedValue({
+      status: "completed",
+      incomplete_details: null,
+      output_text: JSON.stringify(validAudit),
+      usage: { input_tokens: 275, output_tokens: 225, total_tokens: 500, input_tokens_details: { cached_tokens: 80 } },
+    });
+
+    await expect(createBusinessAudit("Менеджеры вручную обрабатывают заявки клиентов и переносят данные в CRM.", "ru", AbortSignal.timeout(1_000)))
+      .resolves.toMatchObject({
+        tokens: 500,
+        usage: { inputTokens: 275, outputTokens: 225, totalTokens: 500, cachedInputTokens: 80 },
+        attempts: 1,
+      });
+    expect(mocks.createResponse).toHaveBeenCalledOnce();
+  });
+
+  it("handles a successful response without usage without inventing zero counts", async () => {
+    mocks.createResponse.mockResolvedValue({
+      status: "completed",
+      incomplete_details: null,
+      output_text: JSON.stringify(validAudit),
+    });
+
+    await expect(createBusinessAudit("Менеджеры вручную обрабатывают заявки клиентов и переносят данные в CRM.", "ru", AbortSignal.timeout(1_000)))
+      .resolves.toMatchObject({ usage: {}, attempts: 1 });
   });
 });

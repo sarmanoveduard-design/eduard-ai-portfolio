@@ -50,13 +50,18 @@ describe("AI audit route gates", () => {
     mocks.consume.mockResolvedValue({ allowed: true, retryAfter: 0 });
     mocks.consumeGlobal.mockResolvedValue({ allowed: true, retryAfter: 0 });
     mocks.moderation.mockResolvedValue(false);
-    mocks.classifyPurpose.mockResolvedValue({ allowed: true, category: "business_automation", reason: "workflow" });
+    mocks.classifyPurpose.mockResolvedValue({
+      result: { allowed: true, category: "business_automation", reason: "workflow" },
+      usage: {},
+      attempts: 1,
+    });
     mocks.createBusinessAudit.mockResolvedValue({
       result: {
         plainLanguage: { currentProcess: "Current process", whatCanBeAutomated: ["Capture"], aiRole: ["Classify"], humanRole: ["Review"] },
         summary: "Summary",
         automationOpportunities: [], architecture: [], requirements: [], questions: [], risks: [], nextStep: "Next",
       },
+      usage: {},
       attempts: 1,
     });
   });
@@ -76,7 +81,11 @@ describe("AI audit route gates", () => {
   });
 
   it("does not call the main audit model after purpose-gate denial", async () => {
-    mocks.classifyPurpose.mockResolvedValue({ allowed: false, category: "off_topic", reason: "not a workflow" });
+    mocks.classifyPurpose.mockResolvedValue({
+      result: { allowed: false, category: "off_topic", reason: "not a workflow" },
+      usage: { inputTokens: 80, outputTokens: 10, totalTokens: 90 },
+      attempts: 1,
+    });
     const response = await POST(request());
     expect(response.status).toBe(403);
     expect(mocks.classifyPurpose).toHaveBeenCalledOnce();
@@ -154,6 +163,7 @@ describe("AI audit route gates", () => {
         plainLanguage: { currentProcess: "Current process", whatCanBeAutomated: ["Capture"], aiRole: ["Classify"], humanRole: ["Review"] },
         summary: "Summary", automationOpportunities: [], architecture: [], requirements: [], questions: [], risks: [], nextStep: "Next",
       },
+      usage: {},
       attempts: 2,
     });
 
@@ -186,6 +196,78 @@ describe("AI audit route gates", () => {
     expect(serializedLogs).not.toContain(businessProcess);
     expect(serializedLogs).not.toContain(rawIp);
     expect(serializedLogs).not.toContain("test-token");
+    consoleInfo.mockRestore();
+  });
+
+  it("logs flat aggregated stage usage and the request token total", async () => {
+    const consoleInfo = vi.spyOn(console, "info").mockImplementation(() => undefined);
+    mocks.classifyPurpose.mockResolvedValue({
+      result: { allowed: true, category: "business_automation", reason: "workflow" },
+      usage: { inputTokens: 210, outputTokens: 35, totalTokens: 245, cachedInputTokens: 90 },
+      attempts: 2,
+    });
+    mocks.createBusinessAudit.mockResolvedValue({
+      result: {
+        plainLanguage: { currentProcess: "Current process", whatCanBeAutomated: ["Capture"], aiRole: ["Classify"], humanRole: ["Review"] },
+        summary: "Summary", automationOpportunities: [], architecture: [], requirements: [], questions: [], risks: [], nextStep: "Next",
+      },
+      tokens: 900,
+      usage: { inputTokens: 620, outputTokens: 280, totalTokens: 900, cachedInputTokens: 260 },
+      attempts: 2,
+    });
+
+    const response = await POST(request());
+    expect(response.status).toBe(200);
+    const logEntries = consoleInfo.mock.calls.map(([entry]) => JSON.parse(String(entry)) as Record<string, unknown>);
+    expect(logEntries).toContainEqual(expect.objectContaining({
+      outcome: "success",
+      gateInputTokens: 210,
+      gateOutputTokens: 35,
+      gateTotalTokens: 245,
+      gateCachedInputTokens: 90,
+      attemptsGate: 2,
+      auditInputTokens: 620,
+      auditOutputTokens: 280,
+      auditTotalTokens: 900,
+      auditCachedInputTokens: 260,
+      attemptsAudit: 2,
+      requestTotalTokens: 1145,
+    }));
+    consoleInfo.mockRestore();
+  });
+
+  it("logs accumulated usage on unavailable without exposing input, IP, or secrets", async () => {
+    const consoleInfo = vi.spyOn(console, "info").mockImplementation(() => undefined);
+    const rawIp = "198.51.100.23";
+    const apiSecret = "Bearer secret-api-token";
+    mocks.classifyPurpose.mockRejectedValue(new PurposeGateUnavailableError(
+      "incomplete",
+      2,
+      { inputTokens: 200, outputTokens: 40, totalTokens: 240, cachedInputTokens: 50 },
+    ));
+
+    const response = await POST(request(businessProcess, { "x-forwarded-for": rawIp, authorization: apiSecret }));
+    expect(response.status).toBe(503);
+    const serializedLogs = JSON.stringify(consoleInfo.mock.calls.map(([entry]) => JSON.parse(String(entry))));
+    expect(serializedLogs).toContain('"gateTotalTokens":240');
+    expect(serializedLogs).not.toContain(businessProcess);
+    expect(serializedLogs).not.toContain(rawIp);
+    expect(serializedLogs).not.toContain("test-token");
+    expect(serializedLogs).not.toContain(apiSecret);
+    consoleInfo.mockRestore();
+  });
+
+  it("omits token fields when response usage is unavailable", async () => {
+    const consoleInfo = vi.spyOn(console, "info").mockImplementation(() => undefined);
+    const response = await POST(request());
+    expect(response.status).toBe(200);
+    const successLog = consoleInfo.mock.calls
+      .map(([entry]) => JSON.parse(String(entry)) as Record<string, unknown>)
+      .find((entry) => entry.outcome === "success");
+    expect(successLog).not.toHaveProperty("gateTotalTokens");
+    expect(successLog).not.toHaveProperty("auditTotalTokens");
+    expect(successLog).not.toHaveProperty("requestTotalTokens");
+    expect(successLog).not.toHaveProperty("tokens");
     consoleInfo.mockRestore();
   });
 });

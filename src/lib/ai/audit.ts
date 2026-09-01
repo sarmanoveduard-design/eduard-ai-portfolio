@@ -4,6 +4,7 @@ import { aiConfig } from "./config";
 import { getOpenAIClient } from "./openai";
 import { auditInstructions, wrapUserContent } from "./prompts";
 import { auditJsonSchema, isAuditResult, type AuditResult } from "./schemas";
+import { addResponseUsage, type AiTokenUsage } from "./token-usage";
 
 export type FullAuditFailureReason =
   | "incomplete"
@@ -18,7 +19,11 @@ export type FullAuditFailureReason =
 export class FullAuditUnavailableError extends Error {
   readonly stage = "full_audit";
 
-  constructor(readonly reason: FullAuditFailureReason, readonly attempts = 1) {
+  constructor(
+    readonly reason: FullAuditFailureReason,
+    readonly attempts = 1,
+    readonly usage: AiTokenUsage = {},
+  ) {
     super("AI_UNAVAILABLE");
     this.name = "FullAuditUnavailableError";
   }
@@ -42,11 +47,12 @@ function isRetryable(error: unknown) {
   return error.name === "APIConnectionError" || status === 408 || status === 409 || (status !== undefined && status >= 500);
 }
 
-export async function createBusinessAudit(input: string, locale: Locale, signal: AbortSignal): Promise<{ result: AuditResult; tokens?: number; attempts: number }> {
+export async function createBusinessAudit(input: string, locale: Locale, signal: AbortSignal): Promise<{ result: AuditResult; tokens?: number; usage: AiTokenUsage; attempts: number }> {
   let attempts = 0;
+  let usage: AiTokenUsage = {};
 
   while (attempts < 2) {
-    if (signal.aborted) throw new FullAuditUnavailableError("timeout", attempts);
+    if (signal.aborted) throw new FullAuditUnavailableError("timeout", attempts, usage);
     attempts += 1;
 
     try {
@@ -61,6 +67,7 @@ export async function createBusinessAudit(input: string, locale: Locale, signal:
         tool_choice: "none",
         text: { format: { type: "json_schema", name: "business_automation_audit", strict: true, schema: auditJsonSchema } },
       }, { signal, maxRetries: 0 });
+      usage = addResponseUsage(usage, response.usage);
 
       if (response.status === "incomplete" || response.incomplete_details) {
         throw new FullAuditUnavailableError("incomplete", attempts);
@@ -82,12 +89,12 @@ export async function createBusinessAudit(input: string, locale: Locale, signal:
         throw new FullAuditUnavailableError("malformed_output", attempts);
       }
       if (!isAuditResult(parsed)) throw new FullAuditUnavailableError("invalid_schema", attempts);
-      return { result: parsed, tokens: response.usage?.total_tokens, attempts };
+      return { result: parsed, tokens: usage.totalTokens, usage, attempts };
     } catch (error) {
       if (attempts < 2 && !signal.aborted && isRetryable(error)) continue;
-      throw new FullAuditUnavailableError(failureReason(error, signal), attempts);
+      throw new FullAuditUnavailableError(failureReason(error, signal), attempts, usage);
     }
   }
 
-  throw new FullAuditUnavailableError("request_failed", attempts);
+  throw new FullAuditUnavailableError("request_failed", attempts, usage);
 }

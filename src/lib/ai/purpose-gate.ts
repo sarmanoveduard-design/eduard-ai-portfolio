@@ -3,6 +3,7 @@ import { aiConfig } from "./config";
 import { getOpenAIClient } from "./openai";
 import { gateInstructions, wrapUserContent } from "./prompts";
 import { gateJsonSchema, isGateResult, type GateResult } from "./schemas";
+import { addResponseUsage, type AiTokenUsage } from "./token-usage";
 
 export type PurposeGateFailureReason =
   | "incomplete"
@@ -16,7 +17,11 @@ export type PurposeGateFailureReason =
 export class PurposeGateUnavailableError extends Error {
   readonly stage = "purpose_gate";
 
-  constructor(readonly reason: PurposeGateFailureReason, readonly attempts = 1) {
+  constructor(
+    readonly reason: PurposeGateFailureReason,
+    readonly attempts = 1,
+    readonly usage: AiTokenUsage = {},
+  ) {
     super("AI_UNAVAILABLE");
     this.name = "PurposeGateUnavailableError";
   }
@@ -105,11 +110,12 @@ function isRetryable(error: unknown) {
   return error.name === "APIConnectionError" || status === 408 || status === 409 || (status !== undefined && status >= 500);
 }
 
-export async function classifyPurpose(input: string, signal: AbortSignal): Promise<GateResult> {
+export async function classifyPurpose(input: string, signal: AbortSignal): Promise<{ result: GateResult; usage: AiTokenUsage; attempts: number }> {
   let attempts = 0;
+  let usage: AiTokenUsage = {};
 
   while (attempts < 2) {
-    if (signal.aborted) throw new PurposeGateUnavailableError("timeout", attempts);
+    if (signal.aborted) throw new PurposeGateUnavailableError("timeout", attempts, usage);
     attempts += 1;
 
     try {
@@ -124,6 +130,7 @@ export async function classifyPurpose(input: string, signal: AbortSignal): Promi
         tool_choice: "none",
         text: { format: { type: "json_schema", name: "business_audit_gate", strict: true, schema: gateJsonSchema } },
       }, { signal, maxRetries: 0 });
+      usage = addResponseUsage(usage, response.usage);
 
       if (response.status === "incomplete" || response.incomplete_details) {
         throw new PurposeGateUnavailableError("incomplete", attempts);
@@ -145,12 +152,12 @@ export async function classifyPurpose(input: string, signal: AbortSignal): Promi
         throw new PurposeGateUnavailableError("malformed_output", attempts);
       }
       if (!isGateResult(parsed)) throw new PurposeGateUnavailableError("invalid_output", attempts);
-      return parsed;
+      return { result: parsed, usage, attempts };
     } catch (error) {
       if (attempts < 2 && !signal.aborted && isRetryable(error)) continue;
-      throw new PurposeGateUnavailableError(failureReason(error, signal), attempts);
+      throw new PurposeGateUnavailableError(failureReason(error, signal), attempts, usage);
     }
   }
 
-  throw new PurposeGateUnavailableError("request_failed", attempts);
+  throw new PurposeGateUnavailableError("request_failed", attempts, usage);
 }

@@ -4,6 +4,7 @@ import { aiConfig, isServerPipelineConfigured } from "@/lib/ai/config";
 import { isModerationBlocked } from "@/lib/ai/moderation";
 import { classifyPurpose, detectImmediateDenial, getPurposeGateFailureReason, PurposeGateUnavailableError } from "@/lib/ai/purpose-gate";
 import { parseAuditRequest } from "@/lib/ai/schemas";
+import type { AiTokenUsage } from "@/lib/ai/token-usage";
 import { createRateLimiter, hashVisitor } from "@/lib/security/rate-limit";
 import { verifyTurnstile } from "@/lib/security/turnstile";
 import { getClientIp } from "@/lib/security/client-ip";
@@ -32,6 +33,21 @@ function latencyBucket(startedAt: number) {
 function getCountry(request: Request) {
   const country = request.headers.get("cf-ipcountry");
   return country && /^[A-Z]{2}$/u.test(country) ? country : undefined;
+}
+
+function tokenLogFields(prefix: "gate" | "audit", usage: AiTokenUsage) {
+  const fields: Record<string, number> = {};
+  if (usage.inputTokens !== undefined) fields[`${prefix}InputTokens`] = usage.inputTokens;
+  if (usage.outputTokens !== undefined) fields[`${prefix}OutputTokens`] = usage.outputTokens;
+  if (usage.totalTokens !== undefined) fields[`${prefix}TotalTokens`] = usage.totalTokens;
+  if (usage.cachedInputTokens !== undefined) fields[`${prefix}CachedInputTokens`] = usage.cachedInputTokens;
+  return fields;
+}
+
+function requestTotalTokens(gateUsage: AiTokenUsage, auditUsage: AiTokenUsage) {
+  return gateUsage.totalTokens !== undefined && auditUsage.totalTokens !== undefined
+    ? gateUsage.totalTokens + auditUsage.totalTokens
+    : undefined;
 }
 
 export async function POST(request: Request) {
@@ -96,24 +112,36 @@ export async function POST(request: Request) {
       return errorResponse(503, "AI_UNAVAILABLE");
     }
 
-    let gate;
+    let gateRun;
     try {
-      gate = await classifyPurpose(input.process, signal);
+      gateRun = await classifyPurpose(input.process, signal);
     } catch (error) {
       const reason = getPurposeGateFailureReason(error)
         ?? (error instanceof Error && (error.name === "AbortError" || error.name === "TimeoutError") ? "timeout" : "request_failed");
       const attempts = error instanceof PurposeGateUnavailableError ? error.attempts : 1;
-      log("unavailable", { stage: "purpose_gate", reason, attempts });
+      const usage = error instanceof PurposeGateUnavailableError ? error.usage : {};
+      log("unavailable", { stage: "purpose_gate", reason, attempts, attemptsGate: attempts, ...tokenLogFields("gate", usage) });
       return errorResponse(503, "AI_UNAVAILABLE");
     }
+    const gate = gateRun.result;
     if (!gate.allowed || !["business_automation", "software_system", "ai_business_usecase"].includes(gate.category)) {
-      log("not_allowed", { stage: "purpose_gate", category: gate.category });
+      log("not_allowed", {
+        stage: "purpose_gate",
+        category: gate.category,
+        attemptsGate: gateRun.attempts,
+        ...tokenLogFields("gate", gateRun.usage),
+      });
       return errorResponse(403, "NOT_ALLOWED");
     }
 
     const fullAuditBudget = await rateLimiter.consumeGlobal("full_audit");
     if (!fullAuditBudget.allowed) {
-      log("unavailable", { category: "full_audit", global_limit: true });
+      log("unavailable", {
+        category: "full_audit",
+        global_limit: true,
+        attemptsGate: gateRun.attempts,
+        ...tokenLogFields("gate", gateRun.usage),
+      });
       return errorResponse(503, "AI_UNAVAILABLE");
     }
 
@@ -125,10 +153,30 @@ export async function POST(request: Request) {
         ? error.reason
         : error instanceof Error && (error.name === "AbortError" || error.name === "TimeoutError") ? "timeout" : "request_failed";
       const attempts = error instanceof FullAuditUnavailableError ? error.attempts : 1;
-      log("unavailable", { stage: "full_audit", reason, attempts });
+      const auditUsage = error instanceof FullAuditUnavailableError ? error.usage : {};
+      const totalTokens = requestTotalTokens(gateRun.usage, auditUsage);
+      log("unavailable", {
+        stage: "full_audit",
+        reason,
+        attempts,
+        attemptsGate: gateRun.attempts,
+        attemptsAudit: attempts,
+        ...tokenLogFields("gate", gateRun.usage),
+        ...tokenLogFields("audit", auditUsage),
+        ...(totalTokens !== undefined ? { requestTotalTokens: totalTokens } : {}),
+      });
       return errorResponse(503, "AI_UNAVAILABLE");
     }
-    log("success", { category: gate.category, tokens: audit.tokens, attemptsAudit: audit.attempts });
+    const totalTokens = requestTotalTokens(gateRun.usage, audit.usage);
+    log("success", {
+      category: gate.category,
+      tokens: audit.tokens,
+      attemptsGate: gateRun.attempts,
+      attemptsAudit: audit.attempts,
+      ...tokenLogFields("gate", gateRun.usage),
+      ...tokenLogFields("audit", audit.usage),
+      ...(totalTokens !== undefined ? { requestTotalTokens: totalTokens } : {}),
+    });
     return NextResponse.json({ data: audit.result }, { headers: { "Cache-Control": "no-store" } });
   } catch (error) {
     const unavailable = error instanceof Error && (error.name === "AbortError" || error.name === "TimeoutError" || error.message === "AI_UNAVAILABLE");
