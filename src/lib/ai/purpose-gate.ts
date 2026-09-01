@@ -9,12 +9,14 @@ export type PurposeGateFailureReason =
   | "empty_output"
   | "malformed_output"
   | "invalid_output"
-  | "unexpected_status";
+  | "unexpected_status"
+  | "timeout"
+  | "request_failed";
 
 export class PurposeGateUnavailableError extends Error {
   readonly stage = "purpose_gate";
 
-  constructor(readonly reason: PurposeGateFailureReason) {
+  constructor(readonly reason: PurposeGateFailureReason, readonly attempts = 1) {
     super("AI_UNAVAILABLE");
     this.name = "PurposeGateUnavailableError";
   }
@@ -85,37 +87,70 @@ export function detectImmediateDenial(input: string): GateResult | null {
   return null;
 }
 
+function failureReason(error: unknown, signal: AbortSignal): PurposeGateFailureReason {
+  if (signal.aborted || (error instanceof Error && ["AbortError", "TimeoutError", "APIConnectionTimeoutError", "APIUserAbortError"].includes(error.name))) {
+    return "timeout";
+  }
+  return error instanceof PurposeGateUnavailableError ? error.reason : "request_failed";
+}
+
+function isRetryable(error: unknown) {
+  if (error instanceof PurposeGateUnavailableError) {
+    return !["timeout", "request_failed"].includes(error.reason);
+  }
+  if (!(error instanceof Error) || ["AbortError", "TimeoutError", "APIConnectionTimeoutError", "APIUserAbortError", "RateLimitError"].includes(error.name)) {
+    return false;
+  }
+  const status = "status" in error && typeof error.status === "number" ? error.status : undefined;
+  return error.name === "APIConnectionError" || status === 408 || status === 409 || (status !== undefined && status >= 500);
+}
+
 export async function classifyPurpose(input: string, signal: AbortSignal): Promise<GateResult> {
-  const response = await getOpenAIClient().responses.create({
-    model: aiConfig.gateModel,
-    reasoning: { effort: "minimal" },
-    instructions: gateInstructions,
-    input: wrapUserContent(input),
-    max_output_tokens: aiConfig.gateMaxOutputTokens,
-    store: false,
-    tools: [],
-    tool_choice: "none",
-    text: { format: { type: "json_schema", name: "business_audit_gate", strict: true, schema: gateJsonSchema } },
-  }, { signal });
+  let attempts = 0;
 
-  if (response.status === "incomplete" || response.incomplete_details) {
-    throw new PurposeGateUnavailableError("incomplete");
-  }
-  if (response.status !== "completed") {
-    throw new PurposeGateUnavailableError("unexpected_status");
+  while (attempts < 2) {
+    if (signal.aborted) throw new PurposeGateUnavailableError("timeout", attempts);
+    attempts += 1;
+
+    try {
+      const response = await getOpenAIClient().responses.create({
+        model: aiConfig.gateModel,
+        reasoning: { effort: "minimal" },
+        instructions: gateInstructions,
+        input: wrapUserContent(input),
+        max_output_tokens: aiConfig.gateMaxOutputTokens,
+        store: false,
+        tools: [],
+        tool_choice: "none",
+        text: { format: { type: "json_schema", name: "business_audit_gate", strict: true, schema: gateJsonSchema } },
+      }, { signal, maxRetries: 0 });
+
+      if (response.status === "incomplete" || response.incomplete_details) {
+        throw new PurposeGateUnavailableError("incomplete", attempts);
+      }
+      if (response.status !== "completed") {
+        throw new PurposeGateUnavailableError("unexpected_status", attempts);
+      }
+      if (typeof response.output_text !== "string") {
+        throw new PurposeGateUnavailableError("invalid_output", attempts);
+      }
+
+      const outputText = response.output_text.trim();
+      if (!outputText) throw new PurposeGateUnavailableError("empty_output", attempts);
+
+      let parsed: unknown;
+      try {
+        parsed = JSON.parse(outputText) as unknown;
+      } catch {
+        throw new PurposeGateUnavailableError("malformed_output", attempts);
+      }
+      if (!isGateResult(parsed)) throw new PurposeGateUnavailableError("invalid_output", attempts);
+      return parsed;
+    } catch (error) {
+      if (attempts < 2 && !signal.aborted && isRetryable(error)) continue;
+      throw new PurposeGateUnavailableError(failureReason(error, signal), attempts);
+    }
   }
 
-  const outputText = response.output_text.trim();
-  if (!outputText) {
-    throw new PurposeGateUnavailableError("empty_output");
-  }
-
-  let parsed: unknown;
-  try {
-    parsed = JSON.parse(outputText) as unknown;
-  } catch {
-    throw new PurposeGateUnavailableError("malformed_output");
-  }
-  if (!isGateResult(parsed)) throw new PurposeGateUnavailableError("invalid_output");
-  return parsed;
+  throw new PurposeGateUnavailableError("request_failed", attempts);
 }

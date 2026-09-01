@@ -86,7 +86,22 @@ describe("AI purpose classification response handling", () => {
       message: "AI_UNAVAILABLE",
       stage: "purpose_gate",
       reason: "incomplete",
+      attempts: 2,
     });
+    expect(mocks.createResponse).toHaveBeenCalledTimes(2);
+  });
+
+  it("retries an incomplete response once and accepts the completed response", async () => {
+    mocks.createResponse
+      .mockResolvedValueOnce({ status: "incomplete", incomplete_details: { reason: "max_output_tokens" }, output_text: "" })
+      .mockResolvedValueOnce({
+        status: "completed",
+        incomplete_details: null,
+        output_text: JSON.stringify({ allowed: true, category: "business_automation", reason: "real workflow" }),
+      });
+
+    await expect(classifyPurpose(allowedProcesses[0], AbortSignal.timeout(1_000))).resolves.toMatchObject({ allowed: true });
+    expect(mocks.createResponse).toHaveBeenCalledTimes(2);
   });
 
   it("fails closed as AI_UNAVAILABLE for empty output_text", async () => {
@@ -118,5 +133,20 @@ describe("AI purpose classification response handling", () => {
       allowed: false,
       category: "off_topic",
     });
+    expect(mocks.createResponse).toHaveBeenCalledOnce();
+  });
+
+  it("does not start a second request after the shared signal is aborted", async () => {
+    const controller = new AbortController();
+    mocks.createResponse.mockImplementationOnce(async () => {
+      controller.abort();
+      return { status: "incomplete", incomplete_details: { reason: "max_output_tokens" }, output_text: "" };
+    });
+
+    await expect(classifyPurpose(allowedProcesses[0], controller.signal)).rejects.toMatchObject({
+      reason: "timeout",
+      attempts: 1,
+    });
+    expect(mocks.createResponse).toHaveBeenCalledOnce();
   });
 });

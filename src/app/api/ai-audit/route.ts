@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
-import { createBusinessAudit } from "@/lib/ai/audit";
+import { createBusinessAudit, FullAuditUnavailableError } from "@/lib/ai/audit";
 import { aiConfig, isServerPipelineConfigured } from "@/lib/ai/config";
 import { isModerationBlocked } from "@/lib/ai/moderation";
-import { classifyPurpose, detectImmediateDenial, getPurposeGateFailureReason } from "@/lib/ai/purpose-gate";
+import { classifyPurpose, detectImmediateDenial, getPurposeGateFailureReason, PurposeGateUnavailableError } from "@/lib/ai/purpose-gate";
 import { parseAuditRequest } from "@/lib/ai/schemas";
 import { createRateLimiter, hashVisitor } from "@/lib/security/rate-limit";
 import { verifyTurnstile } from "@/lib/security/turnstile";
@@ -29,11 +29,17 @@ function latencyBucket(startedAt: number) {
   return "over_15s";
 }
 
+function getCountry(request: Request) {
+  const country = request.headers.get("cf-ipcountry");
+  return country && /^[A-Z]{2}$/u.test(country) ? country : undefined;
+}
+
 export async function POST(request: Request) {
   const requestId = crypto.randomUUID();
   const startedAt = Date.now();
+  const country = getCountry(request);
   const log = (outcome: string, details: Record<string, unknown> = {}) => {
-    console.info(JSON.stringify({ event: "ai_audit", requestId, outcome, latency: latencyBucket(startedAt), ...details }));
+    console.info(JSON.stringify({ event: "ai_audit", requestId, outcome, latency: latencyBucket(startedAt), ...(country ? { country } : {}), ...details }));
   };
 
   try {
@@ -96,7 +102,8 @@ export async function POST(request: Request) {
     } catch (error) {
       const reason = getPurposeGateFailureReason(error)
         ?? (error instanceof Error && (error.name === "AbortError" || error.name === "TimeoutError") ? "timeout" : "request_failed");
-      log("unavailable", { stage: "purpose_gate", reason });
+      const attempts = error instanceof PurposeGateUnavailableError ? error.attempts : 1;
+      log("unavailable", { stage: "purpose_gate", reason, attempts });
       return errorResponse(503, "AI_UNAVAILABLE");
     }
     if (!gate.allowed || !["business_automation", "software_system", "ai_business_usecase"].includes(gate.category)) {
@@ -110,8 +117,18 @@ export async function POST(request: Request) {
       return errorResponse(503, "AI_UNAVAILABLE");
     }
 
-    const audit = await createBusinessAudit(input.process, input.locale, signal);
-    log("success", { category: gate.category, tokens: audit.tokens });
+    let audit;
+    try {
+      audit = await createBusinessAudit(input.process, input.locale, signal);
+    } catch (error) {
+      const reason = error instanceof FullAuditUnavailableError
+        ? error.reason
+        : error instanceof Error && (error.name === "AbortError" || error.name === "TimeoutError") ? "timeout" : "request_failed";
+      const attempts = error instanceof FullAuditUnavailableError ? error.attempts : 1;
+      log("unavailable", { stage: "full_audit", reason, attempts });
+      return errorResponse(503, "AI_UNAVAILABLE");
+    }
+    log("success", { category: gate.category, tokens: audit.tokens, attemptsAudit: audit.attempts });
     return NextResponse.json({ data: audit.result }, { headers: { "Cache-Control": "no-store" } });
   } catch (error) {
     const unavailable = error instanceof Error && (error.name === "AbortError" || error.name === "TimeoutError" || error.message === "AI_UNAVAILABLE");
